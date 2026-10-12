@@ -1,0 +1,323 @@
+﻿@model HolyBackend.Core.Models.PrayerRequest
+@{
+    Layout = null; // Вимикаємо стандартний шаблон MVC
+}
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pray & Deploy | Елітна .NET розробка</title>
+    <style>
+        /* Підключаємо справжній готичний шрифт та термінальний шрифт */
+        @@import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Fira+Code:wght@400;700&display=swap');
+
+        :root {
+            --primary-gold: #c9a25e;
+            --accent-blue: #38bdf8;
+            --dark-bg: #0a0a0e;
+            --card-bg: rgba(15, 15, 20, 0.85);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: #d4d4d4;
+            font-family: 'Fira Code', monospace;
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at top, #1a1a24 0%, var(--dark-bg) 80%);
+                    background-image: url('/images/poster.jpg');
+                    background-size: cover;
+                    background-attachment: fixed;
+                    background-position: center;
+                    background-blend-mode: overlay; 
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* --- Header --- */
+        header {
+            text-align: center;
+            padding: 60px 20px 40px;
+        }
+
+        .logo-container {
+            margin-bottom: 30px;
+            animation: float 4s ease-in-out infinite;
+        }
+
+            .logo-container img {
+                width: 200px;
+                height: 200px;
+                border-radius: 15px;
+                box-shadow: 0 0 30px rgba(56, 189, 248, 0.4);
+                border: 2px solid var(--primary-gold);
+                object-fit: cover;
+            }
+
+        /* Готичний шрифт для головного заголовка */
+        h1 {
+            font-family: 'UnifrakturMaguntia', cursive;
+            color: var(--primary-gold);
+            font-size: 5rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 15px rgba(201, 162, 94, 0.5);
+            font-weight: normal;
+        }
+
+        /* Слоган компанії під заголовком */
+        .sql-tagline {
+            color: var(--accent-blue);
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+            background: rgba(56, 189, 248, 0.1);
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 1px dashed var(--accent-blue);
+        }
+
+        /* --- Alert Messages --- */
+        .alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid #28a745;
+            color: #28a745;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        /* --- Cards --- */
+        .about-section {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 60px;
+            flex-wrap: wrap;
+        }
+
+        .about-card, .team-card {
+            background: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 30px;
+            flex: 1;
+            min-width: 300px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 4px 15px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+            .about-card:hover, .team-card:hover {
+                transform: translateY(-5px);
+                border-color: var(--accent-blue);
+            }
+
+        /* Готичний шрифт для підзаголовків */
+        .section-title {
+            font-family: 'UnifrakturMaguntia', cursive;
+            color: #fff;
+            font-size: 2.5rem;
+            border-bottom: 2px solid var(--primary-gold);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+
+        /* --- Team --- */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .member-name {
+            color: var(--accent-blue);
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .member-role {
+            color: var(--primary-gold);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: inline-block;
+            background: rgba(201, 162, 94, 0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'UnifrakturMaguntia', cursive;
+            letter-spacing: 1px;
+        }
+
+        /* --- Form --- */
+        .contact-form {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 10px;
+            border: 1px dashed var(--primary-gold);
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+            .contact-form input, .contact-form textarea {
+                width: 100%;
+                max-width: 600px;
+                padding: 15px;
+                margin-bottom: 20px;
+                background: #111;
+                color: var(--accent-blue);
+                border: 1px solid #444;
+                border-radius: 5px;
+                font-family: 'Fira Code', monospace;
+                font-size: 1rem;
+            }
+
+                .contact-form input:focus, .contact-form textarea:focus {
+                    outline: none;
+                    border-color: var(--accent-blue);
+                    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+                }
+
+        /* Кнопка теж у готичному стилі */
+        .btn-submit {
+            background: var(--primary-gold);
+            color: #000;
+            padding: 15px 40px;
+            border: none;
+            font-size: 1.5rem;
+            font-family: 'UnifrakturMaguntia', cursive;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+            .btn-submit:hover {
+                background: #fff;
+                box-shadow: 0 0 15px var(--primary-gold);
+            }
+
+        /* --- Footer (Terminal Style) --- */
+        footer {
+            border-top: 1px dashed #444;
+            padding: 40px 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 40px;
+        }
+
+        .footer-line {
+            margin-bottom: 10px;
+        }
+
+        .highlight-white {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .highlight-gold {
+            color: var(--primary-gold);
+        }
+
+        @@keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img src="~/images/logo.jpg" alt="Pray & Deploy Logo">
+            </div>
+            <h1>Pray & Deploy</h1>
+            <div class="sql-tagline">SELECT * FROM miracles WHERE bug = false;</div>
+        </header>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert-success">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <section class="about-section">
+            <div class="about-card">
+                <h2 class="section-title">Про Орден</h2>
+                <p>Ми, <strong>Орден Багоугодних</strong>, створюємо сайти та складні веб-додатки на замовлення, використовуючи міць технологій .NET. Наш код чистий, як сповідь, а архітектура надійна, як фундамент собору.</p>
+                <br>
+                <p>Ми беремося за проєкти будь-якої складності: від стильних корпоративних сайтів до високонавантажених API та баз даних PostgreSQL. І пам'ятайте: ми не створюємо баги, ми даємо їм шанс покаятись перед деплоєм.</p>
+            </div>
+        </section>
+
+        <h2 class="section-title" style="text-align: center; margin-bottom: 40px; margin-top: 20px;">Орден Багоугодних</h2>
+        <section class="team-grid">
+
+            <div class="team-card">
+                <div class="member-name">Євгеній Дроздовський</div>
+                <div class="member-role">Верховний Жрець Коду</div>
+                <p><strong>Офіційні ролі:</strong> «Голова», «Організатор роботи», «Формувальник», «Генератор ідей».</p>
+                <br>
+                <p>Перетворює ідеї у конкретні завдання та об'єднує проєкт в єдине ціле. Відповідає за логіку ASP.NET, налаштування серверів та проєктування бази даних. Приймає ключові рішення щодо архітектури. Його запити до бази бездоганні, а сервери працюють без гріха. Здатен вигнати будь-якого демона (Exception) із системи.</p>
+            </div>
+
+            <div class="team-card">
+                <div class="member-name">Анастасія Гольц</div>
+                <div class="member-role">Інквізиторка Дизайну</div>
+                <p><strong>Офіційні ролі:</strong> «Завершувач», «Оцінювач ідей», «Дослідник ресурсів», «Організатор групи», «Генератор ідей».</p>
+                <br>
+                <p>Джерело креативності команди та сполучна ланка із зовнішнім світом. Оцінює ідеї з точки зору візуалу, знаходить найкращі ресурси та педантично доводить їх до ідеалу перед деплоєм. Підтримує злагоду в команді. Перетворює темряву порожнього екрана на естетично досконалі шедеври.</p>
+            </div>
+
+        </section>
+
+        <section style="margin-top: 80px;">
+            <div class="contact-form">
+                <h2 class="section-title" style="border: none; margin-bottom: 20px;">Обряд Екзорцизму Коду</h2>
+
+                <form asp-action="Index" method="post">
+                    <input asp-for="DeveloperName" placeholder="Ваше грішне ім'я (або назва компанії)" required />
+                    <textarea asp-for="BugDescription" rows="4" placeholder="Опишіть вашого демона (суть бага або вимоги до проєкту)..." required></textarea>
+                    <br>
+                    <button type="submit" class="btn-submit">Сповідатися та Задеплоїти</button>
+                </form>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-line">
+                <span class="highlight-white">Server:</span> 127.0.0.1:666 <span style="margin: 0 10px; color: #444;">|</span>
+                <span class="highlight-white">Git:</span> <span class="highlight-gold">github.com/holy-backend</span>
+            </div>
+            <div class="footer-line">
+                <span class="highlight-white">Email:</span> <span class="highlight-gold">amen@prayanddeploy.com</span>
+            </div>
+        </footer>
+    </div>
+
+</body>
+</html>
