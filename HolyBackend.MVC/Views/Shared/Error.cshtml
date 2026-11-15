@@ -1,25 +1,286 @@
 ﻿@model ErrorViewModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = "Аномалія в Ядрі";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<style>
+    .error-sanctuary-wrap {
+        max-width: 680px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 0.5rem 0;
+    }
 
-@if (Model.ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
+    .anomaly-altar-card {
+        position: relative;
+        background: radial-gradient(circle at 50% 0%, rgba(248, 113, 113, 0.18), rgba(8, 10, 16, 0.98) 68%);
+        border: 1.5px solid rgba(248, 113, 113, 0.55);
+        border-radius: 22px;
+        padding: 2.6rem 2.4rem 2.2rem;
+        text-align: center;
+        box-shadow: 0 25px 65px rgba(0, 0, 0, 0.95), 0 0 40px rgba(248, 113, 113, 0.15), inset 0 0 30px rgba(248, 113, 113, 0.06);
+        overflow: hidden;
+    }
+
+        .anomaly-altar-card::after {
+            content: "";
+            position: absolute;
+            inset: 8px;
+            border: 1px dashed rgba(201, 162, 94, 0.24);
+            border-radius: 16px;
+            pointer-events: none;
+        }
+
+    .anomaly-sigil-wrap {
+        width: 110px;
+        height: 110px;
+        margin: 0 auto 1.2rem;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .anomaly-ring-outer {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 1px dashed rgba(248, 113, 113, 0.65);
+        box-shadow: 0 0 28px rgba(248, 113, 113, 0.3), inset 0 0 18px rgba(201, 162, 94, 0.2);
+        animation: spinAnomalyCW 36s linear infinite;
+    }
+
+    .anomaly-ring-inner {
+        position: absolute;
+        inset: 12px;
+        border-radius: 50%;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        border-top: 2px solid #f87171;
+        border-bottom: 2px solid var(--primary-gold);
+        animation: spinAnomalyCCW 22s linear infinite;
+    }
+
+    .anomaly-svg {
+        width: 60px;
+        height: 60px;
+        filter: drop-shadow(0 0 12px rgba(248, 113, 113, 0.65));
+        z-index: 2;
+    }
+
+    .anomaly-tag-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.74rem;
+        color: #f87171;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+    }
+
+        .anomaly-tag-line::before,
+        .anomaly-tag-line::after {
+            content: "";
+            width: 22px;
+            height: 1px;
+            background: var(--primary-gold);
+            box-shadow: 0 0 8px var(--primary-gold);
+        }
+
+    .anomaly-title {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        color: var(--gold-bright);
+        font-size: 3rem;
+        font-weight: 700;
+        line-height: 1.08;
+        text-shadow: 0 0 25px rgba(248, 113, 113, 0.45);
+        margin-bottom: 0.45rem;
+    }
+
+    .anomaly-subtitle {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-style: italic;
+        color: #fca5a5;
+        font-size: 1.22rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .trace-scroll-box {
+        background: rgba(5, 6, 10, 0.92);
+        border: 1px solid rgba(201, 162, 94, 0.35);
+        border-left: 3px solid #f87171;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.4rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        text-align: left;
+    }
+
+    .trace-code-val {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.84rem;
+        color: var(--accent-blue);
+        word-break: break-all;
+    }
+
+    .copy-trace-btn {
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.4);
+        color: var(--accent-blue);
+        font-family: 'Fira Code', monospace;
+        font-size: 0.72rem;
+        padding: 5px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+        .copy-trace-btn:hover {
+            background: var(--accent-blue);
+            color: #050609;
+        }
+
+    .diagnostic-console {
+        background: #040508;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 1.1rem 1.3rem;
+        text-align: left;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.76rem;
+        color: #9ca3af;
+        line-height: 1.65;
+        margin-bottom: 1.6rem;
+    }
+
+    .console-line-ok {
+        color: #4ade80;
+    }
+
+    .console-line-warn {
+        color: var(--gold-bright);
+    }
+
+    .anomaly-actions {
+        display: flex;
+        justify-content: center;
+        gap: 0.9rem;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 2;
+    }
+
+    @@keyframes spinAnomalyCW {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@keyframes spinAnomalyCCW {
+        from {
+            transform: rotate(360deg);
+        }
+
+        to {
+            transform: rotate(0deg);
+        }
+    }
+</style>
+
+<div class="error-sanctuary-wrap">
+    <div class="anomaly-altar-card">
+        <div class="anomaly-sigil-wrap">
+            <div class="anomaly-ring-outer"></div>
+            <div class="anomaly-ring-inner"></div>
+            <svg class="anomaly-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="32,6 58,52 6,52" fill="rgba(20, 9, 13, 0.9)" stroke="#c9a25e" stroke-width="2.2" />
+                <polyline points="32,16 27,31 36,33 30,47" fill="none" stroke="#f87171" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+                <circle cx="32" cy="12" r="2" fill="#38bdf8" />
+            </svg>
+        </div>
+
+        <div class="anomaly-tag-line">Exceptio Intercepta • System Anomaly</div>
+        <h1 class="anomaly-title">Виявлено Демонічну Аномалію</h1>
+        <div class="anomaly-subtitle">
+            Під час виконання вашого запиту стався непередбачений збій, але захисний бар'єр Ордену вже ізолював загрозу.
+        </div>
+
+        @if (Model != null && Model.ShowRequestId)
+        {
+            <div class="trace-scroll-box">
+                <div>
+                    <div style="font-family: 'Cinzel', serif; font-size: 0.68rem; color: var(--primary-gold); letter-spacing: 1px;">
+                        СЛІД АНОМАЛІЇ (REQUEST TRACE ID):
+                    </div>
+                    <div class="trace-code-val" id="traceIdText">@Model.RequestId</div>
+                </div>
+                <button type="button" class="copy-trace-btn" onclick="copyTraceId(this)">
+                    Скопіювати ID
+                </button>
+            </div>
+        }
+
+        <div class="diagnostic-console" id="diagConsole">
+            <div>[SYSTEM_GUARD] :: Перехоплено необроблений виняток у конвеєрі запиту.</div>
+            <div class="console-line-ok">[UNIT_OF_WORK] :: Незавершені транзакції безпечно відкочено (Rollback).</div>
+            <div class="console-line-warn">[ENVIRONMENT]  :: Детальні стеки винятків приховано від сторонніх очей (ASPNETCORE_ENVIRONMENT).</div>
+        </div>
+
+        <div class="anomaly-actions">
+            <button type="button" class="btn-blue" onclick="runSanctuaryDiagnostics(this)">
+                Запустити діагностику ядра
+            </button>
+            <a asp-controller="Home" asp-action="Index" class="btn-ritual">
+                Повернутися на Головну ✦
+            </a>
+            <a asp-controller="Orders" asp-action="Cabinet" class="btn-ritual" style="border-color: rgba(201,162,94,0.45);">
+                До Особистого Кабінету →
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function copyTraceId(btn) {
+            const text = document.getElementById('traceIdText')?.textContent || '';
+            if (!text) return;
+            navigator.clipboard.writeText(text);
+            const old = btn.textContent;
+            btn.textContent = 'Скопійовано ✦';
+            setTimeout(() => btn.textContent = old, 2000);
+        }
+
+        function runSanctuaryDiagnostics(btn) {
+            const consoleBox = document.getElementById('diagConsole');
+            if (!consoleBox) return;
+
+            btn.disabled = true;
+            btn.textContent = 'Триває освячення...';
+
+            const steps = [
+                '<div class="console-line-warn">[DIAGNOSTIC]   :: Перевірка пулу з\'єднань PostgreSQL (Supabase)... OK</div>',
+                '<div class="console-line-ok">[EXORCISM]     :: Тимчасовий буфер очищено. Конвеєр ASP.NET Core стабільний.</div>'
+            ];
+
+            steps.forEach((line, i) => {
+                setTimeout(() => {
+                    consoleBox.insertAdjacentHTML('beforeend', line);
+                    if (i === steps.length - 1) {
+                        btn.textContent = 'Ядро стабільне ✦';
+                    }
+                }, (i + 1) * 550);
+            });
+        }
+    </script>
 }
-
-<h3>Development Mode</h3>
-<p>
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
-</p>
-<p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>

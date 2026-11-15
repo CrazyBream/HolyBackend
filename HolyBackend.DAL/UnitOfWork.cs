@@ -1,18 +1,19 @@
 ﻿using HolyBackend.Core.Interfaces;
+using HolyBackend.DAL.Repositories;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using HolyBackend.DAL.Repositories;
 
 namespace HolyBackend.DAL
 {
     public class UnitOfWork : IUnitOfWork, IDisposable, IAsyncDisposable
     {
         private readonly HolyDbContext _context;
-        private IDbContextTransaction _currentTransaction;
+        private IDbContextTransaction? _currentTransaction;
 
-        private IOrderRepository _orderRepository;
+        private IOrderRepository? _orderRepository;
+        private IUserRepository? _userRepository;
 
         public UnitOfWork(HolyDbContext context)
         {
@@ -20,6 +21,7 @@ namespace HolyBackend.DAL
         }
 
         public IOrderRepository Orders => _orderRepository ??= new OrderRepository(_context);
+        public IUserRepository Users => _userRepository ??= new UserRepository(_context);
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -48,7 +50,7 @@ namespace HolyBackend.DAL
             catch
             {
                 await RollbackTransactionAsync(cancellationToken);
-                throw; 
+                throw;
             }
             finally
             {

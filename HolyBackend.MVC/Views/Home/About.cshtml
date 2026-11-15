@@ -1,0 +1,588 @@
+﻿@{
+    ViewData["Title"] = "Про Орден";
+}
+
+<style>
+    .about-sanctuary {
+        display: grid;
+        grid-template-columns: 0.92fr 1.08fr;
+        gap: 3.5rem;
+        align-items: center;
+        width: 100%;
+        padding: 0.5rem 0;
+    }
+
+    .order-crest-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.76rem;
+        color: var(--accent-blue);
+        text-transform: uppercase;
+        letter-spacing: 2.5px;
+        margin-bottom: 0.8rem;
+    }
+
+        .order-crest-tag::before {
+            content: "";
+            width: 24px;
+            height: 1px;
+            background: var(--primary-gold);
+            box-shadow: 0 0 8px var(--primary-gold);
+        }
+
+    .about-lead-text {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-size: 1.28rem;
+        color: #e4e4e7;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+
+    .about-sub-text {
+        font-size: 0.92rem;
+        color: #a1a1aa;
+        line-height: 1.7;
+        margin-bottom: 1.6rem;
+    }
+
+    .codex-container {
+        background: rgba(9, 11, 18, 0.82);
+        border: 1px solid rgba(201, 162, 94, 0.28);
+        border-radius: 14px;
+        padding: 1.25rem;
+        margin-bottom: 2rem;
+        box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.85);
+    }
+
+    .codex-tabs {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 1px solid rgba(201, 162, 94, 0.2);
+        padding-bottom: 0.8rem;
+        margin-bottom: 1rem;
+    }
+
+    .codex-tab-btn {
+        flex: 1;
+        background: rgba(15, 18, 28, 0.7);
+        border: 1px solid rgba(201, 162, 94, 0.2);
+        color: #9ca3af;
+        font-family: 'Cinzel', serif;
+        font-size: 0.74rem;
+        font-weight: 700;
+        padding: 0.55rem 0.4rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        letter-spacing: 0.5px;
+    }
+
+        .codex-tab-btn:hover {
+            color: var(--gold-bright);
+            border-color: rgba(201, 162, 94, 0.45);
+        }
+
+        .codex-tab-btn.active {
+            background: linear-gradient(135deg, rgba(201, 162, 94, 0.24), rgba(56, 189, 248, 0.12));
+            border-color: var(--primary-gold);
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(201, 162, 94, 0.2);
+        }
+
+    .codex-panel {
+        display: none;
+        animation: fadeCodex 0.3s ease;
+    }
+
+        .codex-panel.active {
+            display: block;
+        }
+
+    .codex-title {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        color: var(--gold-bright);
+        font-size: 1.15rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .codex-desc {
+        font-size: 0.85rem;
+        color: #cbd5e1;
+        line-height: 1.6;
+        margin-bottom: 0.75rem;
+    }
+
+    .codex-scripture {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.76rem;
+        color: var(--accent-blue);
+        background: rgba(5, 7, 12, 0.9);
+        border-left: 2px solid var(--accent-blue);
+        padding: 0.45rem 0.75rem;
+        border-radius: 0 6px 6px 0;
+    }
+
+    .founders-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.8rem;
+        perspective: 1200px;
+    }
+
+    .gothic-arch-card {
+        position: relative;
+        background: linear-gradient(180deg, rgba(16, 20, 32, 0.92) 0%, rgba(9, 10, 16, 0.96) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.35);
+        border-radius: 130px 130px 16px 16px;
+        padding: 2.4rem 1.5rem 1.6rem;
+        text-align: center;
+        transform-style: preserve-3d;
+        transition: transform 0.15s ease-out, border-color 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), inset 0 0 30px rgba(201, 162, 94, 0.06);
+        overflow: hidden;
+    }
+
+        .gothic-arch-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient( 320px circle at var(--card-x, 50%) var(--card-y, 20%), rgba(201, 162, 94, 0.18), rgba(56, 189, 248, 0.06) 45%, transparent 70% );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .gothic-arch-card::after {
+            content: "";
+            position: absolute;
+            inset: 7px;
+            border: 1px dashed rgba(201, 162, 94, 0.22);
+            border-radius: 124px 124px 12px 12px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .gothic-arch-card:hover {
+            border-color: var(--primary-gold);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 30px rgba(201, 162, 94, 0.18);
+        }
+
+    .card-inner-content {
+        position: relative;
+        z-index: 1;
+        transform: translateZ(25px);
+    }
+
+    .sacred-sigil-wrap {
+        width: 108px;
+        height: 108px;
+        margin: 0 auto 1.1rem;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sigil-halo {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 1px dashed rgba(201, 162, 94, 0.5);
+        box-shadow: 0 0 25px rgba(56, 189, 248, 0.2), inset 0 0 18px rgba(201, 162, 94, 0.2);
+        animation: rotateSigil 36s linear infinite;
+    }
+
+    .sigil-svg {
+        width: 78px;
+        height: 78px;
+        filter: drop-shadow(0 0 12px rgba(201, 162, 94, 0.45));
+        transition: transform 0.35s ease;
+    }
+
+    .gothic-arch-card:hover .sigil-svg {
+        transform: scale(1.08);
+    }
+
+    .founder-name {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        color: #ffffff;
+        font-size: 1.42rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+
+    .founder-title {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-style: italic;
+        color: var(--gold-bright);
+        font-size: 1.18rem;
+        margin-bottom: 0.9rem;
+    }
+
+    .card-mode-switch {
+        display: inline-flex;
+        background: rgba(6, 8, 13, 0.9);
+        border: 1px solid rgba(201, 162, 94, 0.28);
+        border-radius: 50px;
+        padding: 2px;
+        margin-bottom: 1rem;
+    }
+
+    .mode-pill {
+        background: transparent;
+        border: none;
+        color: #9ca3af;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.7rem;
+        padding: 4px 12px;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .mode-pill.active {
+            background: rgba(201, 162, 94, 0.25);
+            color: var(--gold-bright);
+        }
+
+    .founder-view-pane {
+        min-height: 138px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .founder-bio {
+        font-size: 0.83rem;
+        color: #cbd5e1;
+        line-height: 1.6;
+    }
+
+    .skill-row {
+        text-align: left;
+        margin-bottom: 0.55rem;
+    }
+
+    .skill-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.72rem;
+        color: #e4e4e7;
+        margin-bottom: 3px;
+    }
+
+    .skill-track {
+        height: 5px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .skill-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-gold), var(--accent-blue));
+        box-shadow: 0 0 8px var(--accent-blue);
+    }
+
+    .role-tags-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 0.5rem;
+    }
+
+    .role-chip {
+        font-size: 0.68rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        color: var(--accent-blue);
+    }
+
+    .virtue-triad {
+        margin-top: 1.1rem;
+        padding-top: 0.85rem;
+        border-top: 1px solid rgba(201, 162, 94, 0.25);
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 0.98rem;
+        color: var(--primary-gold);
+        letter-spacing: 0.8px;
+        position: relative;
+    }
+
+        .virtue-triad::before {
+            content: "✦";
+            position: absolute;
+            top: -9px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0b0d14;
+            padding: 0 8px;
+            font-size: 0.7rem;
+            color: var(--accent-blue);
+        }
+
+    @@keyframes rotateSigil {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@keyframes fadeCodex {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@media (max-width: 1024px) {
+        .about-sanctuary {
+            grid-template-columns: 1fr;
+        }
+
+        .founders-grid {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .founders-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="about-sanctuary">
+    <div>
+        <div class="order-crest-tag">Ordo Exorcistarum Codicis</div>
+        <h1 class="gothic-title" style="margin-bottom: 0.3rem;">Про Орден</h1>
+        <div class="subtitle-gold">Наша місія — створювати краще</div>
+
+        <p class="about-lead-text">
+            <strong>Орден Багоугодних</strong> — це спільнота жреців коду, які вірять у безгрішну логіку, естетичний дизайн та непорушну архітектуру.
+        </p>
+        <p class="about-sub-text">
+            Ми об'єднуємо інженерну дисципліну, візуальне мистецтво та міць технологій <strong>.NET 8</strong> і <strong>PostgreSQL</strong>, щоб перетворювати складні бізнес-ідеї на довершені цифрові собори.
+        </p>
+
+        <div class="codex-container">
+            <div class="codex-tabs">
+                <button type="button" class="codex-tab-btn active" onclick="switchCodex(0, this)">I. Чистий Код</button>
+                <button type="button" class="codex-tab-btn" onclick="switchCodex(1, this)">II. Візуальний Канон</button>
+                <button type="button" class="codex-tab-btn" onclick="switchCodex(2, this)">III. Твердиня Даних</button>
+            </div>
+
+            <div class="codex-panel active" id="codex-0">
+                <div class="codex-title">Канон Перший: Чистота Архітектури</div>
+                <p class="codex-desc">
+                    Кожен проєкт будується за законами Clean Architecture та патернів DDD. Ми ізолюємо бізнес-ядро від зовнішнього хаосу, щоб система залишалася гнучкою та вічною.
+                </p>
+                <div class="codex-scripture">
+                    RuleFor(code =&gt; code.Architecture).Must(BeCleanAndTestable);
+                </div>
+            </div>
+
+            <div class="codex-panel" id="codex-1">
+                <div class="codex-title">Канон Другий: Естетична Інквізиція</div>
+                <p class="codex-desc">
+                    Інтерфейс має викликати благоговіння. Кожен піксель, шрифт та мікровзаємодія проходять суворий візуальний відбір перед тим, як постати перед очима користувача.
+                </p>
+                <div class="codex-scripture">
+                    transform: darkness(100%) =&gt; masterpiece(100%);
+                </div>
+            </div>
+
+            <div class="codex-panel" id="codex-2">
+                <div class="codex-title">Канон Третій: Транзакційна Непорушність</div>
+                <p class="codex-desc">
+                    Жодна сповідь клієнта не загубиться. Ми використовуємо атомарні транзакції Unit of Work та захищені хмарні кластери PostgreSQL (Supabase).
+                </p>
+                <div class="codex-scripture">
+                    await _unitOfWork.CommitTransactionAsync(); // 0 Exceptions
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a asp-controller="Home" asp-action="Portfolio" class="btn-ritual" style="padding: 0.75rem 1.8rem;">
+                Переглянути наші діяння →
+            </a>
+            <a asp-controller="Home" asp-action="Sponsors" class="btn-blue" style="padding: 0.75rem 1.5rem;">
+                Пантеон Спонсорів
+            </a>
+        </div>
+    </div>
+
+    <div class="founders-grid">
+
+        <div class="gothic-arch-card tilt-founder-card">
+            <div class="card-inner-content">
+                <div class="sacred-sigil-wrap">
+                    <div class="sigil-halo"></div>
+                    <svg class="sigil-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <polygon points="50,6 92,50 50,94 8,50" fill="rgba(10,14,24,0.9)" stroke="#c9a25e" stroke-width="2" />
+                        <circle cx="50" cy="50" r="28" fill="none" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="4 3" />
+                        <line x1="50" y1="16" x2="50" y2="84" stroke="#f3d088" stroke-width="3" stroke-linecap="round" />
+                        <path d="M 32 36 L 50 42 L 68 36" fill="none" stroke="#c9a25e" stroke-width="2.5" stroke-linecap="round" />
+                        <polyline points="36,54 28,50 36,46" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <polyline points="64,46 72,50 64,54" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <circle cx="50" cy="40" r="3.5" fill="#38bdf8" />
+                    </svg>
+                </div>
+
+                <h3 class="founder-name">Євгеній Дроздовський</h3>
+                <div class="founder-title">Верховний Жрець Коду</div>
+
+                <div class="card-mode-switch">
+                    <button type="button" class="mode-pill active" onclick="switchFounderTab('eugene', 'bio', this)">Служіння</button>
+                    <button type="button" class="mode-pill" onclick="switchFounderTab('eugene', 'skills', this)">Арсенал і Ролі</button>
+                </div>
+
+                <div id="eugene-bio" class="founder-view-pane">
+                    <p class="founder-bio">
+                        Перетворює ідеї у конкретні завдання та об'єднує проєкт в єдине ціле. Відповідає за логіку розробки, налаштування серверів та проєктування баз даних. Здатен вигнати будь-якого демона (<code>Exception</code>) із системи.
+                    </p>
+                </div>
+
+                <div id="eugene-skills" class="founder-view-pane" style="display: none;">
+                    <div class="skill-row">
+                        <div class="skill-label"><span>.NET 8 / C# / Clean Arch</span><span>99%</span></div>
+                        <div class="skill-track"><div class="skill-fill" style="width: 99%;"></div></div>
+                    </div>
+                    <div class="skill-row">
+                        <div class="skill-label"><span>PostgreSQL / EF Core</span><span>96%</span></div>
+                        <div class="skill-track"><div class="skill-fill" style="width: 96%;"></div></div>
+                    </div>
+                    <div class="role-tags-wrap">
+                        <span class="role-chip">Голова</span>
+                        <span class="role-chip">Організатор</span>
+                        <span class="role-chip">Формувальник</span>
+                        <span class="role-chip">Генератор ідей</span>
+                    </div>
+                </div>
+
+                <div class="virtue-triad">
+                    Архітектура • Логіка • Стабільність
+                </div>
+            </div>
+        </div>
+
+        <div class="gothic-arch-card tilt-founder-card">
+            <div class="card-inner-content">
+                <div class="sacred-sigil-wrap">
+                    <div class="sigil-halo" style="animation-direction: reverse;"></div>
+                    <svg class="sigil-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="40" fill="rgba(10,14,24,0.9)" stroke="#c9a25e" stroke-width="2" />
+                        <path d="M 50 14 Q 64 36 50 50 Q 36 36 50 14 Z" fill="none" stroke="#38bdf8" stroke-width="1.5" />
+                        <path d="M 50 86 Q 64 64 50 50 Q 36 64 50 86 Z" fill="none" stroke="#38bdf8" stroke-width="1.5" />
+                        <path d="M 14 50 Q 36 64 50 50 Q 36 36 14 50 Z" fill="none" stroke="#38bdf8" stroke-width="1.5" />
+                        <path d="M 86 50 Q 64 64 50 50 Q 64 36 86 50 Z" fill="none" stroke="#38bdf8" stroke-width="1.5" />
+                        <polygon points="50,24 76,50 50,76 24,50" fill="none" stroke="#f3d088" stroke-width="1.8" />
+                        <circle cx="50" cy="50" r="5" fill="#f3d088" />
+                    </svg>
+                </div>
+
+                <h3 class="founder-name">Анастасія Гольц</h3>
+                <div class="founder-title">Інквізиторка Дизайну</div>
+
+                <div class="card-mode-switch">
+                    <button type="button" class="mode-pill active" onclick="switchFounderTab('anastasia', 'bio', this)">Служіння</button>
+                    <button type="button" class="mode-pill" onclick="switchFounderTab('anastasia', 'skills', this)">Арсенал і Ролі</button>
+                </div>
+
+                <div id="anastasia-bio" class="founder-view-pane">
+                    <p class="founder-bio">
+                        Джерело креативності команди та сполучна ланка із зовнішнім світом. Оцінює ідеї з точки зору візуалу, педантично доводить їх до ідеалу та перетворює темряву порожнього екрана на естетично досконалі шедеври.
+                    </p>
+                </div>
+
+                <div id="anastasia-skills" class="founder-view-pane" style="display: none;">
+                    <div class="skill-row">
+                        <div class="skill-label"><span>UI/UX Візуал та Композиція</span><span>99%</span></div>
+                        <div class="skill-track"><div class="skill-fill" style="width: 99%;"></div></div>
+                    </div>
+                    <div class="skill-row">
+                        <div class="skill-label"><span>Дизайн-системи та Естетика</span><span>97%</span></div>
+                        <div class="skill-track"><div class="skill-fill" style="width: 97%;"></div></div>
+                    </div>
+                    <div class="role-tags-wrap">
+                        <span class="role-chip">Завершувач</span>
+                        <span class="role-chip">Оцінювач ідей</span>
+                        <span class="role-chip">Дослідник</span>
+                        <span class="role-chip">Організатор групи</span>
+                    </div>
+                </div>
+
+                <div class="virtue-triad">
+                    Краса • Гармонія • Візуал
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function switchCodex(index, btn) {
+            document.querySelectorAll('.codex-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.codex-panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            const target = document.getElementById('codex-' + index);
+            if (target) target.classList.add('active');
+        }
+        function switchFounderTab(person, tab, btn) {
+            const parent = btn.closest('.gothic-arch-card');
+            parent.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+
+            const bioPane = document.getElementById(person + '-bio');
+            const skillsPane = document.getElementById(person + '-skills');
+
+            if (tab === 'bio') {
+                bioPane.style.display = 'flex';
+                skillsPane.style.display = 'none';
+            } else {
+                bioPane.style.display = 'none';
+                skillsPane.style.display = 'flex';
+            }
+        }
+        
+        const founderCards = document.querySelectorAll('.tilt-founder-card');
+        document.addEventListener('mousemove', (e) => {
+            founderCards.forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                card.style.setProperty('--card-x', `${x}px`);
+                card.style.setProperty('--card-y', `${y}px`);
+
+                              
+                if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotX = ((y - centerY) / centerY) * -6;
+                    const rotY = ((x - centerX) / centerX) * 6;
+                    card.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-4px)`;
+                } else {
+                    card.style.transform = 'rotateX(0deg) rotateY(0deg) translateY(0px)';
+                }
+            });
+        });
+    </script>
+}

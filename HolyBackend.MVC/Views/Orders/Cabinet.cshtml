@@ -1,0 +1,756 @@
+﻿@model IEnumerable<HolyBackend.Core.Models.Order>
+@{
+    ViewData["Title"] = "Особистий кабінет";
+    bool isAdmin = ViewBag.IsAdmin ?? false;
+    string currentUserId = ViewBag.CurrentUserId ?? "";
+    int completedCount = ViewBag.CompletedCount ?? 0;
+
+    var totalOrders = Model.Count();
+    var activeOrders = Model.Count(o => o.Status == HolyBackend.Core.Models.OrderStatus.Pending || o.Status == HolyBackend.Core.Models.OrderStatus.InProgress);
+    var doneOrders = Model.Count(o => o.Status == HolyBackend.Core.Models.OrderStatus.Completed);
+    var totalUnread = Model.Sum(o => o.Messages?.Count(m => !m.IsRead && m.SenderId != currentUserId) ?? 0);
+
+    int nextRankTarget = completedCount < 2 ? 2 : 5;
+    string nextRankName = completedCount < 2 ? "Постійний парафіянин" : "Магістр Ордену (Спонсор)";
+    int rankProgressPercent = completedCount >= 5 ? 100 : (int)Math.Round((double)completedCount / nextRankTarget * 100);
+
+    string GetStatusLabel(HolyBackend.Core.Models.OrderStatus status) => status switch
+    {
+        HolyBackend.Core.Models.OrderStatus.Pending => "Очікує ритуалу",
+        HolyBackend.Core.Models.OrderStatus.InProgress => "В роботі",
+        HolyBackend.Core.Models.OrderStatus.Completed => "Завершено",
+        HolyBackend.Core.Models.OrderStatus.Cancelled => "Скасовано",
+        _ => status.ToString()
+    };
+}
+
+<style>
+    .cabinet-layout {
+        display: grid;
+        grid-template-columns: 315px 1fr;
+        gap: 2.2rem;
+        width: 100%;
+        align-items: start;
+        padding: 0.5rem 0;
+    }
+
+    .sidebar-panel {
+        background: linear-gradient(180deg, rgba(14, 17, 28, 0.94) 0%, rgba(8, 10, 16, 0.98) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.35);
+        border-radius: 20px;
+        padding: 2rem 1.6rem;
+        box-shadow: 0 22px 55px rgba(0, 0, 0, 0.9), inset 0 0 25px rgba(201, 162, 94, 0.05);
+        position: sticky;
+        top: 6rem;
+        text-align: center;
+    }
+
+    .avatar-sigil-wrap {
+        width: 82px;
+        height: 82px;
+        margin: 0 auto 1rem;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .avatar-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 1px dashed rgba(201, 162, 94, 0.55);
+        box-shadow: 0 0 25px rgba(56, 189, 248, 0.18), inset 0 0 15px rgba(201, 162, 94, 0.2);
+        animation: spinAvatarRing 36s linear infinite;
+    }
+
+    .avatar-svg {
+        width: 44px;
+        height: 44px;
+        filter: drop-shadow(0 0 10px rgba(201, 162, 94, 0.5));
+        z-index: 2;
+    }
+
+    .sidebar-username {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        color: #ffffff;
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.2rem;
+    }
+
+    .sidebar-email {
+        font-family: 'Fira Code', monospace;
+        color: #71717a;
+        font-size: 0.75rem;
+        margin-bottom: 0.9rem;
+        word-break: break-all;
+    }
+
+    .title-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 14px;
+        border-radius: 50px;
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 0.84rem;
+        font-weight: 700;
+        background: rgba(201, 162, 94, 0.16);
+        border: 1px solid var(--primary-gold);
+        color: var(--gold-bright);
+        box-shadow: 0 0 15px rgba(201, 162, 94, 0.15);
+        margin-bottom: 1.2rem;
+    }
+
+    .rank-ascension-box {
+        background: rgba(6, 8, 13, 0.85);
+        border: 1px solid rgba(201, 162, 94, 0.22);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        text-align: left;
+        margin-bottom: 1.4rem;
+    }
+
+    .ascension-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.72rem;
+        color: #a1a1aa;
+        margin-bottom: 6px;
+    }
+
+    .ascension-track {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.07);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .ascension-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-gold), var(--accent-blue));
+        box-shadow: 0 0 10px var(--accent-blue);
+        transition: width 0.6s ease;
+    }
+
+    .side-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        border-top: 1px solid rgba(201, 162, 94, 0.18);
+        padding-top: 1.2rem;
+        text-align: left;
+    }
+
+    .side-nav-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0.72rem 1rem;
+        border-radius: 10px;
+        color: #cbd5e1;
+        text-decoration: none;
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 0.96rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        transition: all 0.22s ease;
+    }
+
+        .side-nav-link svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            stroke: var(--primary-gold);
+            transition: stroke 0.22s ease;
+        }
+
+        .side-nav-link:hover,
+        .side-nav-link.active {
+            background: linear-gradient(90deg, rgba(201, 162, 94, 0.18), rgba(56, 189, 248, 0.06));
+            color: var(--gold-bright);
+            border-color: rgba(201, 162, 94, 0.35);
+            transform: translateX(3px);
+        }
+
+            .side-nav-link:hover svg,
+            .side-nav-link.active svg {
+                stroke: var(--accent-blue);
+            }
+
+    .btn-logout-sidebar {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 0.72rem 1rem;
+        background: rgba(248, 113, 113, 0.08);
+        border: 1px solid rgba(248, 113, 113, 0.35);
+        border-radius: 10px;
+        color: #fca5a5;
+        cursor: pointer;
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        transition: all 0.25s ease;
+    }
+
+        .btn-logout-sidebar:hover {
+            background: rgba(248, 113, 113, 0.22);
+            border-color: #f87171;
+            color: #ffffff;
+            box-shadow: 0 0 18px rgba(248, 113, 113, 0.3);
+        }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-box {
+        background: linear-gradient(180deg, rgba(15, 18, 29, 0.9) 0%, rgba(8, 10, 16, 0.95) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.25);
+        border-radius: 14px;
+        padding: 1.15rem 1.4rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75);
+    }
+
+    .stat-box-label {
+        font-family: 'Cinzel', serif;
+        color: #9ca3af;
+        font-size: 0.72rem;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+    }
+
+    .stat-box-val {
+        font-family: 'Cinzel', serif;
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .orders-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.4rem;
+        padding-bottom: 1.1rem;
+        border-bottom: 1px solid rgba(201, 162, 94, 0.2);
+    }
+
+    .status-filter-pills {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-tab-btn {
+        background: rgba(7, 9, 14, 0.85);
+        border: 1px solid rgba(201, 162, 94, 0.22);
+        color: #9ca3af;
+        padding: 0.42rem 0.95rem;
+        border-radius: 50px;
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 0.86rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .filter-tab-btn:hover {
+            color: var(--gold-bright);
+            border-color: rgba(201, 162, 94, 0.45);
+        }
+
+        .filter-tab-btn.active {
+            background: linear-gradient(135deg, rgba(201, 162, 94, 0.25), rgba(56, 189, 248, 0.12));
+            border-color: var(--primary-gold);
+            color: #ffffff;
+            box-shadow: 0 0 14px rgba(201, 162, 94, 0.2);
+        }
+
+    .search-order-input {
+        background: #06080d;
+        border: 1px solid rgba(201, 162, 94, 0.3);
+        color: #ffffff;
+        padding: 0.48rem 1rem;
+        border-radius: 50px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.78rem;
+        min-width: 230px;
+    }
+
+        .search-order-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+        }
+
+    .order-item-card {
+        position: relative;
+        background: linear-gradient(90deg, rgba(12, 15, 24, 0.92) 0%, rgba(8, 10, 16, 0.96) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.26);
+        border-radius: 14px;
+        padding: 1.35rem 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1.5rem;
+        transition: all 0.25s ease;
+        overflow: hidden;
+    }
+
+        .order-item-card:hover {
+            border-color: var(--primary-gold);
+            transform: translateX(4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(201, 162, 94, 0.12);
+        }
+
+    .order-meta-top {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-bottom: 0.4rem;
+    }
+
+    .order-code-pill {
+        color: var(--gold-bright);
+        background: rgba(201, 162, 94, 0.12);
+        border: 1px solid rgba(201, 162, 94, 0.3);
+        padding: 1px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    .order-type-pill {
+        color: var(--accent-blue);
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.28);
+        padding: 1px 8px;
+        border-radius: 6px;
+    }
+
+    .order-title-text {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 1.28rem;
+        color: #ffffff;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+        line-height: 1.25;
+    }
+
+    .order-desc-text {
+        font-size: 0.84rem;
+        color: #a1a1aa;
+        line-height: 1.55;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 13px;
+        border-radius: 50px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.74rem;
+        font-weight: 600;
+    }
+
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+
+    .status-Pending {
+        background: rgba(250, 204, 21, 0.1);
+        color: #facc15;
+        border: 1px solid rgba(250, 204, 21, 0.4);
+    }
+
+        .status-Pending .status-dot {
+            background: #facc15;
+            box-shadow: 0 0 6px #facc15;
+        }
+
+    .status-InProgress {
+        background: rgba(56, 189, 248, 0.12);
+        color: #38bdf8;
+        border: 1px solid rgba(56, 189, 248, 0.45);
+    }
+
+        .status-InProgress .status-dot {
+            background: #38bdf8;
+            box-shadow: 0 0 6px #38bdf8;
+        }
+
+    .status-Completed {
+        background: rgba(74, 222, 128, 0.12);
+        color: #4ade80;
+        border: 1px solid rgba(74, 222, 128, 0.45);
+    }
+
+        .status-Completed .status-dot {
+            background: #4ade80;
+            box-shadow: 0 0 6px #4ade80;
+        }
+
+    .status-Cancelled {
+        background: rgba(248, 113, 113, 0.12);
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.4);
+    }
+
+        .status-Cancelled .status-dot {
+            background: #f87171;
+        }
+
+    .unread-chat-pill {
+        margin-left: 4px;
+        padding: 1px 7px;
+        background: #ef4444;
+        color: #ffffff;
+        border-radius: 50px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.68rem;
+        box-shadow: 0 0 10px #ef4444;
+    }
+
+    @@keyframes spinAvatarRing {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@media (max-width: 1024px) {
+        .cabinet-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar-panel {
+            position: static;
+        }
+    }
+
+    @@media (max-width: 720px) {
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+
+        .order-item-card {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+
+<div class="cabinet-layout">
+    <aside class="sidebar-panel">
+        <div class="avatar-sigil-wrap">
+            <div class="avatar-ring"></div>
+            @if (isAdmin)
+            {
+                <!-- Векторний знак Інквізитора -->
+                <svg class="avatar-svg" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="20,4 36,20 20,36 4,20" fill="none" stroke="#c9a25e" stroke-width="2" />
+                    <line x1="20" y1="8" x2="20" y2="32" stroke="#f3d088" stroke-width="2.2" />
+                    <path d="M 12 15 L 20 19 L 28 15" fill="none" stroke="#38bdf8" stroke-width="2" />
+                </svg>
+            }
+            else
+            {
+                <!-- Векторний знак Парафіянина -->
+                <svg class="avatar-svg" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="20,5 35,32 5,32" fill="none" stroke="#c9a25e" stroke-width="2" />
+                    <circle cx="20" cy="22" r="5" fill="none" stroke="#38bdf8" stroke-width="2" />
+                    <circle cx="20" cy="22" r="1.8" fill="#f3d088" />
+                </svg>
+            }
+        </div>
+
+        <div class="sidebar-username">@ViewBag.UserName</div>
+        <div class="sidebar-email">@ViewBag.UserEmail</div>
+
+        <div class="title-pill">
+            <span>✦</span>
+            <span>@ViewBag.ClientTitle</span>
+        </div>
+
+        <!-- Прогрес сходження для клієнтів -->
+        @if (!isAdmin)
+        {
+            <div class="rank-ascension-box">
+                <div class="ascension-header">
+                    <span>@(completedCount >= 5 ? "Найвищий ранг досягнуто" : $"До титулу «{nextRankName}»")</span>
+                    <strong style="color: var(--gold-bright);">@completedCount / @nextRankTarget</strong>
+                </div>
+                <div class="ascension-track">
+                    <div class="ascension-fill" style="width: @rankProgressPercent%;"></div>
+                </div>
+            </div>
+        }
+
+        <nav class="side-nav">
+            <a asp-action="Cabinet" class="side-nav-link active">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                <span>@(isAdmin ? "Усі замовлення Ордену" : "Мої замовлення")</span>
+            </a>
+
+            <a asp-controller="Account" asp-action="Profile" class="side-nav-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>Святилище Профілю</span>
+            </a>
+
+            @if (!isAdmin)
+            {
+                <a asp-action="Create" class="side-nav-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Замовити новий обряд</span>
+                </a>
+            }
+            else
+            {
+                <a asp-action="Grimoire" class="side-nav-link" style="color: var(--accent-blue);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>Гримуар Клієнтів (CRM)</span>
+                </a>
+            }
+
+            <a asp-controller="Home" asp-action="Statistics" class="side-nav-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                <span>Літопис Статистики</span>
+            </a>
+
+            <form asp-controller="Account" asp-action="Logout" method="post" style="margin-top: 0.8rem; border-top: 1px solid rgba(201,162,94,0.18); padding-top: 1rem;">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-logout-sidebar">
+                    <svg style="width:16px; height:16px; stroke:currentColor;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Вийти з Храму</span>
+                </button>
+            </form>
+        </nav>
+    </aside>
+
+    <!-- ПРАВА ЧАСТИНА: МЕТРИКИ ТА ІНТЕРАКТИВНИЙ СПИСОК ЗАМОВЛЕНЬ -->
+    <section>
+        <!-- 3 верхні картки статистики -->
+        <div class="stats-row">
+            <div class="stat-box">
+                <div>
+                    <div class="stat-box-label">УСЬОГО ЗАЯВОК</div>
+                    <div class="stat-box-val" style="color: var(--gold-bright);">@totalOrders</div>
+                </div>
+                <svg style="width: 34px; height: 34px; stroke: rgba(201,162,94,0.5);" viewBox="0 0 24 24" fill="none" stroke-width="1.6">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+            </div>
+
+            <div class="stat-box">
+                <div>
+                    <div class="stat-box-label">АКТИВНІ РИТУАЛИ</div>
+                    <div class="stat-box-val" style="color: var(--accent-blue);">@activeOrders</div>
+                </div>
+                <svg style="width: 34px; height: 34px; stroke: rgba(56,189,248,0.5);" viewBox="0 0 24 24" fill="none" stroke-width="1.6">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+
+            <div class="stat-box">
+                <div>
+                    <div class="stat-box-label">УСПІШНО ЗАДЕПЛОЄНО</div>
+                    <div class="stat-box-val" style="color: #4ade80;">@doneOrders</div>
+                </div>
+                <svg style="width: 34px; height: 34px; stroke: rgba(74,222,128,0.5);" viewBox="0 0 24 24" fill="none" stroke-width="1.6">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Головний контейнер заявок -->
+        <div class="spotlight-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.2rem;">
+                <div>
+                    <h2 style="font-family: 'Cormorant Unicase', 'Cinzel', serif; color: var(--gold-bright); font-size: 1.7rem; margin-bottom: 0.2rem;">
+                        @(isAdmin ? "Архів Усіх Сповідей Ордену" : "Сувої Ваших Замовлень")
+                    </h2>
+                    <div style="font-size: 0.84rem; color: #9ca3af;">
+                        Керування параметрами обрядів та прямий перехід у Кімнату Сповіді
+                    </div>
+                </div>
+                @if (!isAdmin)
+                {
+                    <a asp-action="Create" class="btn-ritual">+ Новий обряд ✦</a>
+                }
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div style="text-align: center; padding: 3.5rem 1rem; border-top: 1px solid rgba(201,162,94,0.2);">
+                    <p style="color: #a1a1aa; font-size: 0.95rem; margin-bottom: 1.4rem;">
+                        У Священному Гримуарі ще не зафіксовано жодної заявки.
+                    </p>
+                    @if (!isAdmin)
+                    {
+                        <a asp-action="Create" class="btn-ritual">Ініціювати перший обряд ✦</a>
+                    }
+                </div>
+            }
+            else
+            {
+                <!-- Інтерактивна панель фільтрації та живого пошуку -->
+                <div class="orders-toolbar">
+                    <div class="status-filter-pills">
+                        <button type="button" class="filter-tab-btn active" onclick="filterCabinetOrders('all', this)">Усі (@totalOrders)</button>
+                        <button type="button" class="filter-tab-btn" onclick="filterCabinetOrders('InProgress', this)">В роботі</button>
+                        <button type="button" class="filter-tab-btn" onclick="filterCabinetOrders('Pending', this)">Очікують</button>
+                        <button type="button" class="filter-tab-btn" onclick="filterCabinetOrders('Completed', this)">Завершені</button>
+                        @if (totalUnread > 0)
+                        {
+                            <button type="button" class="filter-tab-btn" style="border-color: #ef4444; color: #fca5a5;" onclick="filterCabinetOrders('unread', this)">
+                                Непрочитані (@totalUnread)
+                            </button>
+                        }
+                    </div>
+
+                    <input type="text" id="cabinetSearchInput" class="search-order-input" placeholder="Пошук за #PD або назвою..." oninput="applySearchFilter()" />
+                </div>
+
+                <!-- Список карток замовлень -->
+                <div id="cabinetOrdersList">
+                    @foreach (var order in Model)
+                    {
+                        int unreadInOrder = order.Messages?.Count(m => !m.IsRead && m.SenderId != currentUserId) ?? 0;
+                        string orderCode = "#PD-" + order.Id.ToString().Substring(0, 6).ToUpper();
+
+                        <div class="order-item-card"
+                             data-status="@order.Status"
+                             data-unread="@unreadInOrder"
+                             data-search="@($"{orderCode} {order.Title} {order.Type} {order.Description}".ToLowerInvariant())">
+
+                            <div style="max-width: 65%;">
+                                <div class="order-meta-top">
+                                    <span class="order-code-pill">@orderCode</span>
+                                    <span>@order.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                                    <span class="order-type-pill">@order.Type</span>
+                                </div>
+
+                                <div class="order-title-text">@order.Title</div>
+                                <div class="order-desc-text">@order.Description</div>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem; flex-shrink: 0;">
+                                <span class="status-badge status-@order.Status">
+                                    <span class="status-dot"></span>
+                                    <span>@GetStatusLabel(order.Status)</span>
+                                </span>
+
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <a asp-action="Details" asp-route-id="@order.Id" class="btn-ritual btn-sm" title="Відкрити Кімнату Сповіді">
+                                        <span>Сповідь</span>
+                                        @if (unreadInOrder > 0)
+                                        {
+                                            <span class="unread-chat-pill">+@unreadInOrder</span>
+                                        }
+                                    </a>
+
+                                    <a asp-action="Edit" asp-route-id="@order.Id" class="btn-blue btn-sm" title="Редагувати параметри">
+                                        Ред.
+                                    </a>
+
+                                    <form asp-action="Delete" asp-route-id="@order.Id" method="post" onsubmit="return confirm('Вигнати цю заявку з архівів назавжди?');" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-danger btn-sm" title="Видалити замовлення">
+                                            Видалити
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script>
+        let activeStatusFilter = 'all';
+
+        function filterCabinetOrders(status, btn) {
+            activeStatusFilter = status;
+            document.querySelectorAll('.filter-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applySearchFilter();
+        }
+
+        function applySearchFilter() {
+            const query = (document.getElementById('cabinetSearchInput')?.value || '').trim().toLowerCase();
+            document.querySelectorAll('#cabinetOrdersList .order-item-card').forEach(card => {
+                const cardStatus = card.getAttribute('data-status');
+                const unread = parseInt(card.getAttribute('data-unread') || '0', 10);
+                const searchText = card.getAttribute('data-search') || '';
+
+                let matchesStatus = false;
+                if (activeStatusFilter === 'all') matchesStatus = true;
+                else if (activeStatusFilter === 'unread') matchesStatus = unread > 0;
+                else matchesStatus = cardStatus === activeStatusFilter;
+
+                const matchesQuery = !query || searchText.includes(query);
+                card.style.display = (matchesStatus && matchesQuery) ? 'flex' : 'none';
+            });
+        }
+    </script>
+}

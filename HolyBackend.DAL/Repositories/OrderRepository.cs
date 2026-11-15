@@ -23,6 +23,10 @@ namespace HolyBackend.DAL.Repositories
             return await _context.Orders
                 .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
         }
+        public async Task AddMessageAsync(OrderMessage message, CancellationToken cancellationToken = default)
+        {
+            await _context.OrderMessages.AddAsync(message, cancellationToken);
+        }
 
         public async Task<Order?> GetByIdWithMessagesAsync(Guid id, CancellationToken cancellationToken = default)
         {
@@ -36,6 +40,7 @@ namespace HolyBackend.DAL.Repositories
         public async Task<IEnumerable<Order>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             return await _context.Orders
+                .Include(o => o.Messages)
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync(cancellationToken);
         }
@@ -43,6 +48,7 @@ namespace HolyBackend.DAL.Repositories
         public async Task<IEnumerable<Order>> GetByClientIdAsync(string clientId, CancellationToken cancellationToken = default)
         {
             return await _context.Orders
+                .Include(o => o.Messages)
                 .Where(o => o.ClientId == clientId)
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync(cancellationToken);
@@ -62,5 +68,21 @@ namespace HolyBackend.DAL.Repositories
         {
             _context.Orders.Remove(order);
         }
+        public async Task<OrderMessage?> GetMessageByIdAsync(Guid messageId, CancellationToken cancellationToken = default)
+        {
+            return await _context.OrderMessages
+                .FirstOrDefaultAsync(m => m.Id == messageId, cancellationToken);
+        }
+
+        public void UpdateMessage(OrderMessage message)
+        {
+            _context.OrderMessages.Update(message);
+        }
+
+        public void DeleteMessage(OrderMessage message)
+        {
+            _context.OrderMessages.Remove(message);
+        }
+
     }
 }

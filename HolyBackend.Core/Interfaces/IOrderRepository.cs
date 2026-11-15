@@ -16,5 +16,10 @@ namespace HolyBackend.Core.Interfaces
         Task AddAsync(Order order, CancellationToken cancellationToken = default);
         void Update(Order order);
         void Delete(Order order);
+
+        Task AddMessageAsync(OrderMessage message, CancellationToken cancellationToken = default);
+        Task<OrderMessage?> GetMessageByIdAsync(Guid messageId, CancellationToken cancellationToken = default);
+        void UpdateMessage(OrderMessage message);
+        void DeleteMessage(OrderMessage message);
     }
 }

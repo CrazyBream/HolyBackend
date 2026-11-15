@@ -1,5 +1,5 @@
-﻿using HolyBackend.Core.Models;
-using System;
+﻿using System;
+using HolyBackend.Core.Models;
 
 namespace HolyBackend.Core.Patterns.Factory
 {
@@ -7,28 +7,31 @@ namespace HolyBackend.Core.Patterns.Factory
     {
         public Order CreateOrder(string title, string description, OrderType type, string clientId)
         {
-            var order = new Order
+            return new Order
             {
                 Id = Guid.NewGuid(),
-                Title = title,
+                Title = FormatTitleByType(title, type),
                 Description = description,
                 Type = type,
                 ClientId = clientId,
                 CreatedAt = DateTime.UtcNow,
                 Status = OrderStatus.Pending
             };
+        }
 
-            switch (type)
+        public string FormatTitleByType(string title, OrderType type)
+        {
+            var cleanTitle = title
+                .Replace("[Терміново] Рефакторинг: ", "")
+                .Replace("[UI/UX] ", "")
+                .Trim();
+
+            return type switch
             {
-                case OrderType.Refactoring:
-                    order.Title = $"[Терміново] Рефакторинг: {title}";
-                    break;
-                case OrderType.Design:
-                    order.Title = $"[UI/UX] {title}";
-                    break;
-            }
-
-            return order;
+                OrderType.Refactoring => $"[Терміново] Рефакторинг: {cleanTitle}",
+                OrderType.Design => $"[UI/UX] {cleanTitle}",
+                _ => cleanTitle
+            };
         }
     }
 }

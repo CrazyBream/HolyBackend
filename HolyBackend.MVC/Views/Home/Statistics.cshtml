@@ -1,0 +1,625 @@
+﻿@model HolyBackend.MVC.Models.OrderStatisticsViewModel
+@{
+    ViewData["Title"] = "Статистика Ордену";
+    int activeRituals = Model.InProgressOrders + Model.PendingOrders;
+    double circleCircumference = 490;
+    double strokeOffset = circleCircumference - (circleCircumference * Model.SuccessRatePercentage / 100.0);
+
+    string GetCategoryTitle(string key) => key switch
+    {
+        "Standard" => "Зведення Веб-Соборів (Standard)",
+        "Backend" => "Архітектура Ядра та БД (Backend)",
+        "Design" => "Сакральний UI/UX Візуал (Design)",
+        "Refactoring" => "Екзорцизм Легасі-Коду (Refactoring)",
+        _ => key
+    };
+
+    string GetCategoryLore(string key) => key switch
+    {
+        "Standard" => "Комплексні корпоративні платформи та веб-застосунки повного циклу з особистими кабінетами.",
+        "Backend" => "Високонадійні серверні ядра на .NET 8, Clean Architecture, транзакції Unit of Work та кластери PostgreSQL.",
+        "Design" => "Авторські неоготичні інтерфейси, векторна графіка, 3D-паралакс сцени та дизайн-системи.",
+        "Refactoring" => "Термінове вигнання критичних багів, оптимізація повільних SQL-запитів та усунення технічного боргу.",
+        _ => "Канонічні технологічні ритуали Ордену."
+    };
+}
+
+<style>
+    .stats-observatory {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2.2rem;
+        padding: 0.5rem 0;
+    }
+
+    .observatory-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        border-bottom: 1px solid rgba(201, 162, 94, 0.22);
+        padding-bottom: 1.4rem;
+    }
+
+    .chronicle-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.75rem;
+        color: var(--accent-blue);
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+
+        .chronicle-tag::before {
+            content: "";
+            width: 24px;
+            height: 1px;
+            background: var(--primary-gold);
+            box-shadow: 0 0 8px var(--primary-gold);
+        }
+
+    .period-tabs {
+        display: inline-flex;
+        gap: 0.4rem;
+        background: rgba(9, 11, 18, 0.9);
+        padding: 0.38rem;
+        border-radius: 50px;
+        border: 1px solid rgba(201, 162, 94, 0.28);
+        box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+    }
+
+    .period-tab {
+        padding: 0.48rem 1.25rem;
+        border-radius: 50px;
+        color: #9ca3af;
+        text-decoration: none;
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        border: 1px solid transparent;
+        transition: all 0.25s ease;
+    }
+
+        .period-tab:hover {
+            color: var(--gold-bright);
+        }
+
+        .period-tab.active {
+            background: linear-gradient(135deg, rgba(201, 162, 94, 0.28), rgba(56, 189, 248, 0.14));
+            color: #ffffff;
+            border-color: var(--primary-gold);
+            box-shadow: 0 0 18px rgba(201, 162, 94, 0.22);
+        }
+
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.4rem;
+    }
+
+    .kpi-card {
+        position: relative;
+        background: linear-gradient(180deg, rgba(15, 18, 29, 0.9) 0%, rgba(8, 10, 16, 0.95) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.26);
+        border-radius: 16px;
+        padding: 1.4rem 1.5rem;
+        overflow: hidden;
+        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.75), inset 0 0 22px rgba(0, 0, 0, 0.7);
+    }
+
+        .kpi-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient( 260px circle at var(--kx, 50%) var(--ky, 0%), rgba(201, 162, 94, 0.15), transparent 70% );
+            pointer-events: none;
+        }
+
+        .kpi-card:hover {
+            border-color: var(--primary-gold);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.9), 0 0 25px rgba(201, 162, 94, 0.15);
+        }
+
+    .kpi-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.6rem;
+    }
+
+    .kpi-label {
+        font-family: 'Cinzel', serif;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        color: #9ca3af;
+        text-transform: uppercase;
+    }
+
+    .kpi-glyph-svg {
+        width: 26px;
+        height: 26px;
+        opacity: 0.85;
+    }
+
+    .kpi-value {
+        font-family: 'Cinzel', serif;
+        font-size: 2.75rem;
+        font-weight: 800;
+        line-height: 1.05;
+        margin-bottom: 0.45rem;
+    }
+
+    .kpi-foot {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-style: italic;
+        font-size: 0.98rem;
+        color: #a1a1aa;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .observatory-main-split {
+        display: grid;
+        grid-template-columns: 0.92fr 1.08fr;
+        gap: 2rem;
+        align-items: stretch;
+    }
+
+    .astrolabe-status-card,
+    .categories-breakdown-card {
+        background: linear-gradient(180deg, rgba(13, 16, 25, 0.92) 0%, rgba(8, 10, 16, 0.96) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.3);
+        border-radius: 18px;
+        padding: 1.8rem 2rem;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.85), inset 0 0 28px rgba(0, 0, 0, 0.75);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .panel-heading {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 1.45rem;
+        color: var(--gold-bright);
+        margin-bottom: 0.25rem;
+    }
+
+    .panel-subheading {
+        font-size: 0.82rem;
+        color: #9ca3af;
+        margin-bottom: 1.4rem;
+    }
+
+    .radial-chart-layout {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: 1.6rem;
+        align-items: center;
+        margin: auto 0;
+    }
+
+    .radial-svg-wrap {
+        position: relative;
+        width: 200px;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .radial-svg {
+        width: 200px;
+        height: 200px;
+        transform: rotate(-90deg);
+        overflow: visible;
+    }
+
+    .radial-progress-arc {
+        transition: stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+        filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.45));
+    }
+
+    .radial-center-info {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        pointer-events: none;
+    }
+
+    .radial-percent {
+        font-family: 'Cinzel', serif;
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: var(--gold-bright);
+        line-height: 1;
+        text-shadow: 0 0 18px rgba(201, 162, 94, 0.4);
+    }
+
+    .radial-caption {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.66rem;
+        color: var(--accent-blue);
+        letter-spacing: 1.5px;
+        margin-top: 4px;
+    }
+
+    .status-legend-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+    }
+
+    .status-legend-item {
+        background: rgba(6, 8, 13, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 10px;
+        padding: 0.6rem 0.9rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: border-color 0.2s, transform 0.2s;
+    }
+
+        .status-legend-item:hover {
+            border-color: rgba(201, 162, 94, 0.4);
+            transform: translateX(4px);
+        }
+
+    .legend-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.82rem;
+        color: #e4e4e7;
+    }
+
+    .legend-diamond {
+        width: 8px;
+        height: 8px;
+        transform: rotate(45deg);
+        flex-shrink: 0;
+    }
+
+    .legend-count {
+        font-family: 'Cinzel', serif;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .category-rows-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 1.1rem;
+    }
+
+    .category-stat-row {
+        background: rgba(6, 8, 13, 0.75);
+        border: 1px solid rgba(201, 162, 94, 0.2);
+        border-radius: 12px;
+        padding: 0.9rem 1.1rem;
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+
+        .category-stat-row:hover,
+        .category-stat-row.active {
+            border-color: var(--primary-gold);
+            background: rgba(16, 20, 32, 0.92);
+            box-shadow: 0 0 20px rgba(201, 162, 94, 0.14);
+        }
+
+    .category-row-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.45rem;
+        font-size: 0.86rem;
+    }
+
+    .category-name {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 1.08rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .category-metrics {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.78rem;
+        color: var(--accent-blue);
+    }
+
+    .bar-track {
+        width: 100%;
+        height: 9px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(201, 162, 94, 0.2);
+    }
+
+    .bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-gold), var(--accent-blue));
+        border-radius: 20px;
+        box-shadow: 0 0 12px var(--blue-glow);
+        transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .category-lore-inspector {
+        margin-top: 1.2rem;
+        padding: 0.85rem 1rem;
+        background: rgba(5, 7, 11, 0.92);
+        border-left: 3px solid var(--primary-gold);
+        border-radius: 0 8px 8px 0;
+        font-size: 0.8rem;
+        color: #cbd5e1;
+        line-height: 1.5;
+    }
+
+    @@media (max-width: 1080px) {
+        .kpi-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .observatory-main-split {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .kpi-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .radial-chart-layout {
+            grid-template-columns: 1fr;
+            justify-Items: center;
+        }
+
+        .status-legend-list {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="stats-observatory">
+    <div class="observatory-header">
+        <div>
+            <div class="chronicle-tag">Annales Ordinis • Live Telemetry</div>
+            <h1 class="gothic-title" style="margin-bottom: 0.2rem;">Літопис Діянь</h1>
+            <div class="subtitle-gold" style="margin-bottom: 0;">
+                Відкрита статистика Ордену • <span style="color: var(--accent-blue); font-style: normal; font-family: 'Cinzel', serif; font-size: 1.05rem;">@Model.PeriodLabel</span>
+            </div>
+        </div>
+
+        <div class="period-tabs">
+            <a asp-action="Statistics" asp-route-period="7days" class="period-tab @(Model.SelectedPeriod == "7days" ? "active" : "")">7 днів</a>
+            <a asp-action="Statistics" asp-route-period="30days" class="period-tab @(Model.SelectedPeriod == "30days" ? "active" : "")">30 днів</a>
+            <a asp-action="Statistics" asp-route-period="year" class="period-tab @(Model.SelectedPeriod == "year" ? "active" : "")">За рік</a>
+            <a asp-action="Statistics" asp-route-period="all" class="period-tab @(Model.SelectedPeriod == "all" ? "active" : "")">Весь час</a>
+        </div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-top-row">
+                <span class="kpi-label">Усього замовлень</span>
+                <svg class="kpi-glyph-svg" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="6" y="4" width="20" height="24" rx="2" fill="none" stroke="#c9a25e" stroke-width="1.8" />
+                    <line x1="10" y1="11" x2="22" y2="11" stroke="#38bdf8" stroke-width="1.6" />
+                    <line x1="10" y1="16" x2="22" y2="16" stroke="#c9a25e" stroke-width="1.6" />
+                    <line x1="10" y1="21" x2="17" y2="21" stroke="#c9a25e" stroke-width="1.6" />
+                </svg>
+            </div>
+            <div class="kpi-value count-up" data-target="@Model.TotalOrders" style="color: var(--gold-bright);">@Model.TotalOrders</div>
+            <div class="kpi-foot">Занесено у Священний Гримуар</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-top-row">
+                <span class="kpi-label">Успішно закрито</span>
+                <svg class="kpi-glyph-svg" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="16,3 29,16 16,29 3,16" fill="none" stroke="#4ade80" stroke-width="1.8" />
+                    <polyline points="11,16 15,20 22,12" fill="none" stroke="#f3d088" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </div>
+            <div class="kpi-value count-up" data-target="@Model.CompletedOrders" style="color: #4ade80;">@Model.CompletedOrders</div>
+            <div class="kpi-foot" style="color: #86efac;">Освячені релізи без багів</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-top-row">
+                <span class="kpi-label">Активні ритуали</span>
+                <svg class="kpi-glyph-svg" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="16" cy="16" r="12" fill="none" stroke="#38bdf8" stroke-width="1.8" stroke-dasharray="4 3" />
+                    <polyline points="16,9 16,16 21,19" fill="none" stroke="#f3d088" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </div>
+            <div class="kpi-value count-up" data-target="@activeRituals" style="color: var(--accent-blue);">@activeRituals</div>
+            <div class="kpi-foot">В роботі: @Model.InProgressOrders • В черзі: @Model.PendingOrders</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-top-row">
+                <span class="kpi-label">Індекс спасіння</span>
+                <svg class="kpi-glyph-svg" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="16,4 28,26 4,26" fill="none" stroke="#c9a25e" stroke-width="1.8" />
+                    <circle cx="16" cy="18" r="4" fill="#38bdf8" />
+                </svg>
+            </div>
+            <div class="kpi-value" style="color: var(--primary-gold);">
+                <span class="count-up" data-target="@Model.SuccessRatePercentage">@Model.SuccessRatePercentage</span>%
+            </div>
+            <div class="kpi-foot">Частка завершених проєктів</div>
+        </div>
+    </div>
+
+    <div class="observatory-main-split">
+
+        <div class="astrolabe-status-card">
+            <div>
+                <h3 class="panel-heading">Баланс Статусів Ордену</h3>
+                <div class="panel-subheading">Співвідношення завершених, активних та скасованих обрядів</div>
+            </div>
+
+            <div class="radial-chart-layout">
+                <div class="radial-svg-wrap">
+                    <svg class="radial-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="astrolabeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#f3d088" />
+                                <stop offset="50%" stop-color="#38bdf8" />
+                                <stop offset="100%" stop-color="#4ade80" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="100" cy="100" r="92" fill="none" stroke="rgba(201,162,94,0.25)" stroke-width="1" stroke-dasharray="3 5" />
+                        <circle cx="100" cy="100" r="78" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="14" />
+                        <circle class="radial-progress-arc"
+                                cx="100" cy="100" r="78"
+                                fill="none"
+                                stroke="url(#astrolabeGrad)"
+                                stroke-width="14"
+                                stroke-linecap="round"
+                                stroke-dasharray="490"
+                                stroke-dashoffset="@strokeOffset.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                        <circle cx="100" cy="100" r="62" fill="none" stroke="rgba(56,189,248,0.22)" stroke-width="1" stroke-dasharray="8 4" />
+                    </svg>
+
+                    <div class="radial-center-info">
+                        <div class="radial-percent">@Model.SuccessRatePercentage%</div>
+                        <div class="radial-caption">SALVATIO</div>
+                    </div>
+                </div>
+
+                <div class="status-legend-list">
+                    <div class="status-legend-item">
+                        <div class="legend-left">
+                            <span class="legend-diamond" style="background: #4ade80; box-shadow: 0 0 8px #4ade80;"></span>
+                            <span>Виконано (Completed)</span>
+                        </div>
+                        <span class="legend-count" style="color: #4ade80;">@Model.CompletedOrders</span>
+                    </div>
+
+                    <div class="status-legend-item">
+                        <div class="legend-left">
+                            <span class="legend-diamond" style="background: var(--accent-blue); box-shadow: 0 0 8px var(--accent-blue);"></span>
+                            <span>В роботі (InProgress)</span>
+                        </div>
+                        <span class="legend-count" style="color: var(--accent-blue);">@Model.InProgressOrders</span>
+                    </div>
+
+                    <div class="status-legend-item">
+                        <div class="legend-left">
+                            <span class="legend-diamond" style="background: var(--gold-bright); box-shadow: 0 0 8px var(--primary-gold);"></span>
+                            <span>Очікують (Pending)</span>
+                        </div>
+                        <span class="legend-count" style="color: var(--gold-bright);">@Model.PendingOrders</span>
+                    </div>
+
+                    <div class="status-legend-item">
+                        <div class="legend-left">
+                            <span class="legend-diamond" style="background: #f87171; box-shadow: 0 0 8px #f87171;"></span>
+                            <span>Скасовано (Cancelled)</span>
+                        </div>
+                        <span class="legend-count" style="color: #f87171;">@Model.CancelledOrders</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid rgba(201,162,94,0.18); padding-top: 0.9rem; margin-top: 1.2rem; display: flex; justify-content: space-between; font-family: 'Fira Code', monospace; font-size: 0.74rem; color: #9ca3af;">
+                <span>DB_CLUSTER: SUPABASE_POOLER</span>
+                <span style="color: var(--gold-bright);">SYNC: REALTIME</span>
+            </div>
+        </div>
+
+        <div class="categories-breakdown-card">
+            <div>
+                <h3 class="panel-heading">Розподіл Ритуалів за Категоріями</h3>
+                <div class="panel-subheading">Наведіть або натисніть на категорію, щоб переглянути специфікацію напрямку</div>
+
+                <div class="category-rows-wrap">
+                    @{
+                        bool isFirst = true;
+                        string defaultLore = "Наведіть курсор на будь-яку категорію вище для інспекції канону.";
+                    }
+                    @foreach (var item in Model.OrdersByType)
+                    {
+                        int percent = Model.TotalOrders > 0
+                        ? (int)Math.Round((double)item.Value / Model.TotalOrders * 100)
+                        : 0;
+                        string lore = GetCategoryLore(item.Key);
+                        if (isFirst) { defaultLore = lore; }
+
+                        <div class="category-stat-row @(isFirst ? "active" : "")"
+                             onmouseenter="inspectCategory('@lore', this)"
+                             onclick="inspectCategory('@lore', this)">
+                            <div class="category-row-top">
+                                <span class="category-name">@GetCategoryTitle(item.Key)</span>
+                                <span class="category-metrics">@item.Value замовлень (@percent%)</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: @percent%;"></div>
+                            </div>
+                        </div>
+                        isFirst = false;
+                    }
+                </div>
+            </div>
+
+            <div class="category-lore-inspector" id="categoryLoreBox">
+                @defaultLore
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('mousemove', (e) => {
+            document.querySelectorAll('.kpi-card').forEach(card => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--kx', `${e.clientX - rect.left}px`);
+                card.style.setProperty('--ky', `${e.clientY - rect.top}px`);
+            });
+        });
+        function inspectCategory(loreText, rowEl) {
+            document.querySelectorAll('.category-stat-row').forEach(r => r.classList.remove('active'));
+            rowEl.classList.add('active');
+            const box = document.getElementById('categoryLoreBox');
+            if (box) box.textContent = loreText;
+        }
+         
+        document.querySelectorAll('.count-up').forEach(el => {
+            const target = parseInt(el.getAttribute('data-target') || '0', 10);
+            if (isNaN(target) || target <= 0) return;
+
+            let current = 0;
+            const step = Math.max(1, Math.ceil(target / 24));
+            const timer = setInterval(() => {
+                current += step;
+                if (current >= target) {
+                    el.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    el.textContent = current;
+                }
+            }, 25);
+        });
+    </script>
+}

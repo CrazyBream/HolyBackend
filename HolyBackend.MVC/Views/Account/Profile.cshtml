@@ -1,0 +1,607 @@
+﻿@model HolyBackend.MVC.Models.ProfileSettingsViewModel
+@{
+    ViewData["Title"] = "Святилище Профілю";
+    bool isAdmin = Model.Role == "Admin";
+    string initial = !string.IsNullOrEmpty(Model.UserName) ? Model.UserName.Substring(0, 1).ToUpper() : "P";
+
+    int nextTarget = Model.CompletedOrdersCount < 2 ? 2 : 5;
+    string nextRankLabel = Model.CompletedOrdersCount < 2 ? "Постійний парафіянин" : "Магістр Ордену • Святий Спонсор";
+    int progressPercent = Model.CompletedOrdersCount >= 5 ? 100 : (int)Math.Round((double)Model.CompletedOrdersCount / nextTarget * 100);
+}
+
+<style>
+    .profile-sanctuary {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2.2rem;
+        padding: 0.5rem 0;
+    }
+
+    .sanctuary-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        border-bottom: 1px solid rgba(201, 162, 94, 0.22);
+        padding-bottom: 1.3rem;
+    }
+
+    .profile-crest-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.75rem;
+        color: var(--accent-blue);
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+    }
+
+        .profile-crest-line::before {
+            content: "";
+            width: 24px;
+            height: 1px;
+            background: var(--primary-gold);
+            box-shadow: 0 0 8px var(--primary-gold);
+        }
+
+    .identity-reliquary-card {
+        background: radial-gradient(circle at 18% 50%, rgba(201, 162, 94, 0.16), rgba(10, 13, 21, 0.96) 65%);
+        border: 1px solid rgba(201, 162, 94, 0.4);
+        border-radius: 20px;
+        padding: 1.8rem 2.2rem;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 2rem;
+        align-items: center;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.88), inset 0 0 28px rgba(0, 0, 0, 0.75);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .reliquary-seal-wrap {
+        width: 92px;
+        height: 92px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .reliquary-ring-outer {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 1px dashed rgba(201, 162, 94, 0.6);
+        box-shadow: 0 0 25px rgba(56, 189, 248, 0.2), inset 0 0 18px rgba(201, 162, 94, 0.2);
+        animation: spinProfileRing 38s linear infinite;
+    }
+
+    .reliquary-monogram {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: rgba(6, 8, 14, 0.95);
+        border: 1.5px solid var(--primary-gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Cinzel', serif;
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--gold-bright);
+        text-shadow: 0 0 14px var(--gold-glow);
+        z-index: 2;
+    }
+
+    .identity-main-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .identity-role-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        width: fit-content;
+        padding: 3px 12px;
+        border-radius: 50px;
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 0.82rem;
+        font-weight: 700;
+        background: rgba(201, 162, 94, 0.18);
+        border: 1px solid var(--primary-gold);
+        color: var(--gold-bright);
+    }
+
+    .identity-name-display {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 1.85rem;
+        font-weight: 700;
+        color: #ffffff;
+        line-height: 1.15;
+    }
+
+    .identity-email-display {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.82rem;
+        color: var(--accent-blue);
+    }
+
+    .identity-metrics-side {
+        min-width: 250px;
+        background: rgba(5, 7, 12, 0.85);
+        border: 1px solid rgba(201, 162, 94, 0.24);
+        border-radius: 14px;
+        padding: 1rem 1.25rem;
+    }
+
+    .rank-bar-track {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.07);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 6px;
+    }
+
+    .rank-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-gold), var(--accent-blue));
+        box-shadow: 0 0 10px var(--accent-blue);
+    }
+
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .sanctuary-form-card {
+        background: linear-gradient(180deg, rgba(14, 17, 28, 0.94) 0%, rgba(8, 10, 16, 0.98) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.32);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.85), inset 0 0 25px rgba(0, 0, 0, 0.75);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .card-header-flex {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 1.4rem;
+        padding-bottom: 0.9rem;
+        border-bottom: 1px solid rgba(201, 162, 94, 0.18);
+    }
+
+    .card-header-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: rgba(6, 8, 13, 0.95);
+        border: 1px solid rgba(201, 162, 94, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .card-header-title {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--gold-bright);
+    }
+
+    .field-label {
+        display: flex;
+        justify-content: space-between;
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        color: var(--primary-gold);
+        font-size: 0.92rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .input-eye-wrapper {
+        position: relative;
+        margin-bottom: 1.1rem;
+    }
+
+    .holy-input-field {
+        width: 100%;
+        padding: 12px 42px 12px 14px;
+        background: #06080d;
+        border: 1px solid rgba(201, 162, 94, 0.3);
+        color: #ffffff;
+        border-radius: 10px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.88rem;
+        transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+        .holy-input-field:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.22);
+        }
+
+    .eye-toggle-btn {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #71717a;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        transition: color 0.2s;
+    }
+
+        .eye-toggle-btn:hover {
+            color: var(--gold-bright);
+        }
+
+    .strength-meter-wrap {
+        margin-top: -0.6rem;
+        margin-bottom: 1rem;
+    }
+
+    .strength-bars {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+        margin-bottom: 4px;
+    }
+
+    .strength-segment {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 4px;
+        transition: background 0.25s;
+    }
+
+    .danger-sanctuary-card {
+        background: linear-gradient(90deg, rgba(24, 9, 13, 0.94) 0%, rgba(12, 8, 12, 0.98) 100%);
+        border: 1px solid rgba(248, 113, 113, 0.45);
+        border-radius: 20px;
+        padding: 1.8rem 2.2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.8rem;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.9);
+    }
+
+    .burn-confirm-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        min-width: 340px;
+    }
+
+    @@keyframes spinProfileRing {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@media (max-width: 980px) {
+        .identity-reliquary-card {
+            grid-template-columns: 1fr;
+            text-align: center;
+            justify-items: center;
+        }
+
+        .identity-main-info {
+            align-items: center;
+        }
+
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="profile-sanctuary">
+    <div class="sanctuary-header">
+        <div>
+            <div class="profile-crest-line">Sanctuarium Personae • Profile</div>
+            <h1 class="gothic-title" style="font-size: 3.2rem; margin-bottom: 0.15rem;">Святилище Профілю</h1>
+            <div class="subtitle-gold" style="margin-bottom: 0;">
+                Управління особистими реквізитами, ключами доступу та присягою Ордену
+            </div>
+        </div>
+        <a asp-controller="Orders" asp-action="Cabinet" class="btn-ritual">← Повернутися в Кабінет</a>
+    </div>
+
+    <div class="identity-reliquary-card">
+        <div class="reliquary-seal-wrap">
+            <div class="reliquary-ring-outer"></div>
+            <div class="reliquary-monogram" id="liveMonogram">@initial</div>
+        </div>
+
+        <div class="identity-main-info">
+            <div class="identity-role-tag">
+                <span>✦</span>
+                <span>@Model.CustomTitle (@(isAdmin ? "Інквізиція" : "Парафіянин"))</span>
+            </div>
+            <div class="identity-name-display" id="liveNamePreview">@Model.UserName</div>
+            <div class="identity-email-display" id="liveEmailPreview">@Model.Email</div>
+        </div>
+
+        <div class="identity-metrics-side">
+            <div style="display: flex; justify-content: space-between; font-size: 0.74rem; color: #9ca3af; margin-bottom: 4px;">
+                <span>В Ордені з @Model.RegisteredAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                <strong style="color: #4ade80;">Закрито: @Model.CompletedOrdersCount</strong>
+            </div>
+            @if (!isAdmin)
+            {
+                <div style="font-size: 0.72rem; color: var(--gold-bright);">
+                    @(Model.CompletedOrdersCount >= 5 ? "Досягнуто найвищого сану Пантеону" : $"Прогрес до «{nextRankLabel}»: {Model.CompletedOrdersCount}/{nextTarget}")
+                </div>
+                <div class="rank-bar-track">
+                    <div class="rank-bar-fill" style="width: @progressPercent%;"></div>
+                </div>
+            }
+            else
+            {
+                <div style="font-family: 'Fira Code', monospace; font-size: 0.72rem; color: var(--gold-bright); margin-top: 4px;">
+                    ROOT_ACCESS :: INQUISITOR_PRIVILEGES
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="profile-grid">
+
+        <div class="sanctuary-form-card">
+            <div>
+                <div class="card-header-flex">
+                    <div class="card-header-icon">
+                        <svg style="width:20px; height:20px; stroke:var(--primary-gold);" viewBox="0 0 24 24" fill="none" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="card-header-title">Особисті Реквізити</div>
+                        <div style="font-size: 0.76rem; color: #9ca3af;">Зміна публічного імені у чатах та пошти</div>
+                    </div>
+                </div>
+
+                <form asp-action="UpdateProfile" method="post" id="profileUpdateForm">
+                    @Html.AntiForgeryToken()
+
+                    <label class="field-label">
+                        <span>Ім'я або Псевдонім в Ордені</span>
+                        <span style="font-family: 'Fira Code', monospace; font-size: 0.7rem; color: #71717a;">3–50 символів</span>
+                    </label>
+                    <div class="input-eye-wrapper">
+                        <input type="text" name="userName" id="profileNameInput" value="@Model.UserName"
+                               class="holy-input-field" style="padding-right: 14px;"
+                               required minlength="3" maxlength="50" oninput="syncIdentityPreview()" />
+                    </div>
+
+                    <label class="field-label">
+                        <span>Електронна пошта (Email)</span>
+                        <span style="font-family: 'Fira Code', monospace; font-size: 0.7rem; color: #71717a;">Логін для входу</span>
+                    </label>
+                    <div class="input-eye-wrapper">
+                        <input type="email" name="email" id="profileEmailInput" value="@Model.Email"
+                               class="holy-input-field" style="padding-right: 14px;"
+                               required oninput="syncIdentityPreview()" />
+                    </div>
+
+                    <div style="padding: 0.75rem 0.9rem; background: rgba(6, 8, 13, 0.85); border: 1px solid rgba(201, 162, 94, 0.2); border-radius: 10px; font-size: 0.78rem; color: #a1a1aa; margin-bottom: 1.2rem;">
+                        Після збереження ваша сесія та ім'я у верхній шапці Храму оновляться автоматично.
+                    </div>
+
+                    <button type="submit" class="btn-ritual" style="width: 100%; padding: 0.82rem;">
+                        Зберегти нові реквізити ✦
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="sanctuary-form-card">
+            <div>
+                <div class="card-header-flex">
+                    <div class="card-header-icon" style="border-color: rgba(56, 189, 248, 0.45);">
+                        <svg style="width:20px; height:20px; stroke:var(--accent-blue);" viewBox="0 0 24 24" fill="none" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="card-header-title" style="color: var(--accent-blue);">Зміна Таємного Пароля</div>
+                        <div style="font-size: 0.76rem; color: #9ca3af;">Оновлення криптографічного ключа SHA-256</div>
+                    </div>
+                </div>
+
+                <form asp-action="ChangePassword" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <label class="field-label">Поточний пароль</label>
+                    <div class="input-eye-wrapper">
+                        <input type="password" id="currPassInput" name="currentPassword" class="holy-input-field" placeholder="••••••••" required />
+                        <button type="button" class="eye-toggle-btn" onclick="togglePassField('currPassInput', this)" title="Показати/приховати">
+                            <svg style="width:18px; height:18px; stroke:currentColor;" viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <label class="field-label">
+                        <span>Новий пароль (мінімум 6 символів)</span>
+                        <span id="passStrengthText" style="font-family: 'Fira Code', monospace; font-size: 0.7rem; color: #71717a;">Очікування...</span>
+                    </label>
+                    <div class="input-eye-wrapper">
+                        <input type="password" id="newPassInput" name="newPassword" class="holy-input-field"
+                               placeholder="••••••••" required minlength="6" oninput="evaluatePasswordStrength()" />
+                        <button type="button" class="eye-toggle-btn" onclick="togglePassField('newPassInput', this)" title="Показати/приховати">
+                            <svg style="width:18px; height:18px; stroke:currentColor;" viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="strength-meter-wrap">
+                        <div class="strength-bars">
+                            <div class="strength-segment" id="strSeg1"></div>
+                            <div class="strength-segment" id="strSeg2"></div>
+                            <div class="strength-segment" id="strSeg3"></div>
+                            <div class="strength-segment" id="strSeg4"></div>
+                        </div>
+                    </div>
+
+                    <label class="field-label">
+                        <span>Підтвердіть новий пароль</span>
+                        <span id="passMatchText" style="font-family: 'Fira Code', monospace; font-size: 0.7rem; color: #71717a;"></span>
+                    </label>
+                    <div class="input-eye-wrapper">
+                        <input type="password" id="confPassInput" name="confirmNewPassword" class="holy-input-field"
+                               placeholder="••••••••" required minlength="6" oninput="evaluatePasswordStrength()" />
+                        <button type="button" class="eye-toggle-btn" onclick="togglePassField('confPassInput', this)" title="Показати/приховати">
+                            <svg style="width:18px; height:18px; stroke:currentColor;" viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <button type="submit" class="btn-blue" style="width: 100%; padding: 0.82rem;">
+                        Оновити таємний пароль
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="danger-sanctuary-card">
+        <div style="max-width: 580px;">
+            <div style="font-family: 'Fira Code', monospace; font-size: 0.72rem; color: #f87171; letter-spacing: 2px; margin-bottom: 4px;">
+                TERMINATIO FOEDERIS • DANGER ZONE
+            </div>
+            <h3 style="font-family: 'Cormorant Unicase', 'Cinzel', serif; font-size: 1.5rem; color: #f87171; margin-bottom: 0.4rem;">
+                Зречення Присяги (Спалення Профілю)
+            </h3>
+            <p style="font-size: 0.85rem; color: #fca5a5; line-height: 1.6;">
+                Видалення профілю є остаточним і незворотним. Усі ваші активні та архівні замовлення, а також сувої повідомлень у Кімнатах Сповіді будуть назавжди стерті з хронік Ордену.
+            </p>
+        </div>
+
+        <form asp-action="DeleteMyAccount" method="post" class="burn-confirm-controls"
+              onsubmit="return confirm('Ви дійсно бажаєте назавжди спалити свій профіль та всі замовлення?');">
+            @Html.AntiForgeryToken()
+
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: #fca5a5; cursor: pointer;">
+                <input type="checkbox" id="unlockBurnCheck" onchange="toggleBurnLock(this.checked)"
+                       style="accent-color: #ef4444; width: 15px; height: 15px; cursor: pointer;" />
+                <span>Я усвідомлюю незворотність знищення моїх сувоїв</span>
+            </label>
+
+            <div style="display: flex; gap: 0.65rem; align-items: center;">
+                <div class="input-eye-wrapper" style="margin-bottom: 0; flex: 1;">
+                    <input type="password" id="burnPassInput" name="confirmPassword"
+                           placeholder="Поточний пароль..." required disabled
+                           class="holy-input-field" style="border-color: rgba(248,113,113,0.5); padding-top: 9px; padding-bottom: 9px;" />
+                    <button type="button" class="eye-toggle-btn" onclick="togglePassField('burnPassInput', this)">
+                        <svg style="width:16px; height:16px; stroke:currentColor;" viewBox="0 0 24 24" fill="none" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+
+                <button type="submit" id="burnSubmitBtn" class="btn-danger" disabled style="opacity: 0.45; cursor: not-allowed; padding: 0.68rem 1.3rem;">
+                    Спалити профіль
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function syncIdentityPreview() {
+            const nameVal = (document.getElementById('profileNameInput')?.value || '').trim();
+            const emailVal = (document.getElementById('profileEmailInput')?.value || '').trim();
+
+            document.getElementById('liveNamePreview').textContent = nameVal || 'Безіменний';
+            document.getElementById('liveEmailPreview').textContent = emailVal || '—';
+            document.getElementById('liveMonogram').textContent = nameVal ? nameVal.charAt(0).toUpperCase() : 'P';
+        }
+
+        function togglePassField(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            input.type = input.type === 'password' ? 'text' : 'password';
+            btn.style.color = input.type === 'text' ? 'var(--accent-blue)' : '#71717a';
+        }
+
+        function evaluatePasswordStrength() {
+            const pass = document.getElementById('newPassInput')?.value || '';
+            const conf = document.getElementById('confPassInput')?.value || '';
+
+            let score = 0;
+            if (pass.length >= 6) score++;
+            if (pass.length >= 10) score++;
+            if (/[A-ZА-ЯІЇЄҐ]/.test(pass) && /[0-9]/.test(pass)) score++;
+            if (/[^A-Za-zА-Яа-яІіЇїЄєҐґ0-9]/.test(pass)) score++;
+
+            const colors = ['#ef4444', '#facc15', '#38bdf8', '#4ade80'];
+            const labels = ['Слабкий ключ', 'Прийнятний', 'Надійний', 'Непорушний шифр'];
+
+            for (let i = 1; i <= 4; i++) {
+                const seg = document.getElementById('strSeg' + i);
+                seg.style.background = i <= score ? colors[score - 1] : 'rgba(255,255,255,0.08)';
+            }
+
+            const strTxt = document.getElementById('passStrengthText');
+            strTxt.textContent = pass.length > 0 ? labels[Math.max(0, score - 1)] : 'Очікування...';
+            strTxt.style.color = pass.length > 0 ? colors[Math.max(0, score - 1)] : '#71717a';
+
+            const matchTxt = document.getElementById('passMatchText');
+            if (!conf) {
+                matchTxt.textContent = '';
+            } else if (pass === conf) {
+                matchTxt.textContent = 'Ключі збігаються';
+                matchTxt.style.color = '#4ade80';
+            } else {
+                matchTxt.textContent = 'Паролі не збігаються';
+                matchTxt.style.color = '#f87171';
+            }
+        }
+
+        function toggleBurnLock(unlocked) {
+            const passInput = document.getElementById('burnPassInput');
+            const submitBtn = document.getElementById('burnSubmitBtn');
+            passInput.disabled = !unlocked;
+            submitBtn.disabled = !unlocked;
+            submitBtn.style.opacity = unlocked ? '1' : '0.45';
+            submitBtn.style.cursor = unlocked ? 'pointer' : 'not-allowed';
+            if (unlocked) passInput.focus();
+        }
+    </script>
+}

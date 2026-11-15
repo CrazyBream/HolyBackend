@@ -7,18 +7,26 @@ namespace HolyBackend.Core.Patterns.Strategy
     {
         private readonly IEnumerable<IClientRankStrategy> _strategies;
 
-        public ClientRankContext()
+        // Підтримує і DI, і створення за замовчуванням
+        public ClientRankContext(IEnumerable<IClientRankStrategy>? strategies = null)
         {
-            _strategies = new List<IClientRankStrategy>
-            {
-                new MasterRankStrategy(),
-                new RegularClientRankStrategy(),
-                new NewbieRankStrategy()
-            };
+            _strategies = strategies != null && strategies.Any()
+                ? strategies
+                : new List<IClientRankStrategy>
+                {
+                    new MasterRankStrategy(),
+                    new RegularClientRankStrategy(),
+                    new NewbieRankStrategy()
+                };
         }
 
-        public string CalculateTitle(int completedOrders)
+        public string CalculateTitle(int completedOrders, bool isHolySponsor = false)
         {
+            if (isHolySponsor && completedOrders < 5)
+            {
+                return "Святий Спонсор";
+            }
+
             var strategy = _strategies.First(s => s.IsApplicable(completedOrders));
             return strategy.GetTitle();
         }
