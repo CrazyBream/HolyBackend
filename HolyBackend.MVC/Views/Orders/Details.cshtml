@@ -1,0 +1,640 @@
+﻿@model HolyBackend.Core.Models.Order
+@{
+    ViewData["Title"] = "Кімната Сповіді";
+    bool isAdmin = ViewBag.IsAdmin ?? false;
+    string currentUserId = ViewBag.CurrentUserId ?? "";
+    string orderCode = "#PD-" + Model.Id.ToString().Substring(0, 6).ToUpper();
+
+    int stageIndex = Model.Status switch
+    {
+        HolyBackend.Core.Models.OrderStatus.Pending => 1,
+        HolyBackend.Core.Models.OrderStatus.InProgress => 2,
+        HolyBackend.Core.Models.OrderStatus.Completed => 3,
+        _ => 0   
+    };
+}
+
+<style>
+    .confession-sanctuary {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 0.95fr 1.25fr;
+        gap: 2.2rem;
+        align-items: start;
+        padding: 0.5rem 0;
+    }
+
+    .order-dossier-card {
+        background: linear-gradient(180deg, rgba(14, 17, 28, 0.94) 0%, rgba(8, 10, 16, 0.98) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.35);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 22px 55px rgba(0, 0, 0, 0.9), inset 0 0 28px rgba(0, 0, 0, 0.75);
+        position: sticky;
+        top: 6rem;
+    }
+
+    .dossier-top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.1rem;
+        padding-bottom: 0.9rem;
+        border-bottom: 1px solid rgba(201, 162, 94, 0.2);
+    }
+
+    .order-id-tag {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.8rem;
+        color: var(--accent-blue);
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        letter-spacing: 1px;
+    }
+
+    .dossier-status-pill {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.75rem;
+        padding: 4px 13px;
+        border-radius: 50px;
+        border: 1px solid var(--primary-gold);
+        color: var(--gold-bright);
+        background: rgba(201, 162, 94, 0.14);
+    }
+
+    .dossier-title {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        color: #ffffff;
+        font-size: 1.65rem;
+        font-weight: 700;
+        line-height: 1.25;
+        margin-bottom: 1rem;
+    }
+
+    .ritual-stepper {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1.4rem;
+        background: rgba(5, 7, 12, 0.85);
+        padding: 0.85rem;
+        border-radius: 12px;
+        border: 1px solid rgba(201, 162, 94, 0.2);
+    }
+
+    .step-node {
+        text-align: center;
+        position: relative;
+        opacity: 0.4;
+        transition: opacity 0.3s;
+    }
+
+        .step-node.active {
+            opacity: 1;
+        }
+
+    .step-diamond {
+        width: 10px;
+        height: 10px;
+        margin: 0 auto 6px;
+        transform: rotate(45deg);
+        background: #71717a;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .step-node.active .step-diamond {
+        background: var(--primary-gold);
+        box-shadow: 0 0 10px var(--primary-gold);
+        border-color: #fff;
+    }
+
+    .step-node.current .step-diamond {
+        background: var(--accent-blue);
+        box-shadow: 0 0 12px var(--accent-blue);
+    }
+
+    .step-label {
+        font-family: 'Cinzel', serif;
+        font-size: 0.66rem;
+        color: #e4e4e7;
+        letter-spacing: 0.5px;
+    }
+
+    .dossier-meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .meta-cell {
+        background: rgba(6, 8, 13, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 10px;
+        padding: 0.7rem 0.9rem;
+    }
+
+    .meta-cell-label {
+        font-size: 0.68rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 2px;
+    }
+
+    .meta-cell-val {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 1rem;
+        color: var(--gold-bright);
+        font-weight: 700;
+    }
+
+    .description-scroll {
+        padding: 1.2rem 1.3rem;
+        background: rgba(5, 6, 10, 0.9);
+        border: 1px solid rgba(201, 162, 94, 0.25);
+        border-left: 3px solid var(--primary-gold);
+        border-radius: 10px;
+        margin-bottom: 1.4rem;
+        font-size: 0.9rem;
+        color: #e4e4e7;
+        line-height: 1.65;
+        white-space: pre-wrap;
+    }
+
+    .inquisitor-decree-box {
+        margin-top: 1.4rem;
+        padding-top: 1.2rem;
+        border-top: 1px dashed rgba(201, 162, 94, 0.35);
+    }
+
+    .holy-select {
+        flex: 1;
+        padding: 10px 12px;
+        background: #06080d;
+        color: var(--accent-blue);
+        border: 1px solid rgba(56, 189, 248, 0.4);
+        border-radius: 8px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.82rem;
+    }
+
+    .confession-chat-card {
+        background: linear-gradient(180deg, rgba(13, 16, 26, 0.94) 0%, rgba(7, 9, 14, 0.98) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.35);
+        border-radius: 20px;
+        padding: 1.8rem;
+        box-shadow: 0 22px 55px rgba(0, 0, 0, 0.9), inset 0 0 28px rgba(0, 0, 0, 0.8);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(201, 162, 94, 0.22);
+    }
+
+    .live-sync-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.72rem;
+        color: #4ade80;
+        background: rgba(74, 222, 128, 0.08);
+        border: 1px solid rgba(74, 222, 128, 0.3);
+        padding: 3px 10px;
+        border-radius: 50px;
+    }
+
+    .live-sync-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #4ade80;
+        box-shadow: 0 0 8px #4ade80;
+    }
+
+    .chat-messages-viewport {
+        height: 430px;
+        overflow-y: auto;
+        padding: 1.1rem;
+        background: rgba(4, 5, 9, 0.92);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 14px;
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .chat-msg-bubble {
+        padding: 0.9rem 1.1rem;
+        border-radius: 12px;
+        position: relative;
+        transition: border-color 0.2s;
+    }
+
+        .chat-msg-bubble.inquisitor {
+            background: linear-gradient(90deg, rgba(201, 162, 94, 0.16), rgba(14, 16, 24, 0.9));
+            border: 1px solid rgba(201, 162, 94, 0.35);
+            border-left: 3px solid var(--primary-gold);
+        }
+
+        .chat-msg-bubble.client {
+            background: linear-gradient(90deg, rgba(56, 189, 248, 0.1), rgba(12, 15, 24, 0.9));
+            border: 1px solid rgba(56, 189, 248, 0.28);
+            border-left: 3px solid var(--accent-blue);
+        }
+
+    .msg-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        font-size: 0.78rem;
+    }
+
+    .msg-author-name {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 1.02rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .msg-role-tag {
+        margin-left: 6px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.68rem;
+    }
+
+        .msg-role-tag.admin {
+            background: rgba(201, 162, 94, 0.22);
+            color: var(--gold-bright);
+            border: 1px solid rgba(201, 162, 94, 0.45);
+        }
+
+        .msg-role-tag.user {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-blue);
+            border: 1px solid rgba(56, 189, 248, 0.38);
+        }
+
+    .msg-icon-btn {
+        background: none;
+        border: 1px solid transparent;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 3px 6px;
+        border-radius: 6px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+    }
+
+        .msg-icon-btn:hover {
+            color: #ffffff;
+            border-color: rgba(201, 162, 94, 0.4);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+    .msg-body-text {
+        font-size: 0.9rem;
+        color: #e4e4e7;
+        line-height: 1.55;
+        word-break: break-word;
+    }
+
+    .quick-phrases-bar {
+        display: flex;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.75rem;
+    }
+
+    .quick-phrase-chip {
+        background: rgba(9, 12, 20, 0.9);
+        border: 1px solid rgba(201, 162, 94, 0.25);
+        color: #a1a1aa;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.72rem;
+        padding: 4px 10px;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .quick-phrase-chip:hover {
+            border-color: var(--primary-gold);
+            color: var(--gold-bright);
+        }
+
+    .chat-input-row {
+        display: flex;
+        gap: 0.7rem;
+        align-items: center;
+    }
+
+    .chat-text-input {
+        flex: 1;
+        padding: 12px 15px;
+        background: #06080d;
+        color: #ffffff;
+        border: 1px solid rgba(201, 162, 94, 0.32);
+        border-radius: 10px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.86rem;
+        transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+        .chat-text-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+        }
+
+    @@media (max-width: 1024px) {
+        .confession-sanctuary {
+            grid-template-columns: 1fr;
+        }
+
+        .order-dossier-card {
+            position: static;
+        }
+    }
+</style>
+
+<div class="confession-sanctuary">
+    <div class="order-dossier-card">
+        <div class="dossier-top-bar">
+            <span class="order-id-tag">ОБРЯД @orderCode</span>
+            <span class="dossier-status-pill">Статус: @Model.Status</span>
+        </div>
+
+        <h2 class="dossier-title">@Model.Title</h2>
+
+        @if (Model.Status != HolyBackend.Core.Models.OrderStatus.Cancelled)
+        {
+            <div class="ritual-stepper">
+                <div class="step-node @(stageIndex >= 1 ? "active" : "") @(stageIndex == 1 ? "current" : "")">
+                    <div class="step-diamond"></div>
+                    <div class="step-label">I. Очікування</div>
+                </div>
+                <div class="step-node @(stageIndex >= 2 ? "active" : "") @(stageIndex == 2 ? "current" : "")">
+                    <div class="step-diamond"></div>
+                    <div class="step-label">II. В роботі</div>
+                </div>
+                <div class="step-node @(stageIndex >= 3 ? "active" : "") @(stageIndex == 3 ? "current" : "")">
+                    <div class="step-diamond"></div>
+                    <div class="step-label">III. Освячено</div>
+                </div>
+            </div>
+        }
+
+        <div class="dossier-meta-grid">
+            <div class="meta-cell">
+                <div class="meta-cell-label">Парафіянин</div>
+                <div class="meta-cell-val">@(Model.Client?.UserName ?? Model.ClientId)</div>
+                <div style="font-size: 0.72rem; color: var(--accent-blue);">@(Model.Client?.CustomTitle ?? "Парафіянин")</div>
+            </div>
+            <div class="meta-cell">
+                <div class="meta-cell-label">Категорія Ритуалу</div>
+                <div class="meta-cell-val" style="color: var(--accent-blue);">@Model.Type</div>
+                <div style="font-size: 0.72rem; color: #9ca3af;">@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+            </div>
+        </div>
+
+        <div style="font-family: 'Cinzel', serif; font-size: 0.72rem; color: var(--primary-gold); letter-spacing: 1px; margin-bottom: 6px;">
+            СУВІЙ ОПИСУ ГРІХА (ТЕХНІЧНЕ ЗАВДАННЯ):
+        </div>
+        <div class="description-scroll">@Model.Description</div>
+
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-blue btn-sm" style="flex: 1;">
+                Редагувати заявку
+            </a>
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Видалити цю заявку разом із усім чатом?');" style="flex: 1;">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-danger btn-sm" style="width: 100%;">
+                    Видалити заявку
+                </button>
+            </form>
+        </div>
+
+        @if (isAdmin && Model.Status != HolyBackend.Core.Models.OrderStatus.Completed && Model.Status != HolyBackend.Core.Models.OrderStatus.Cancelled)
+        {
+            <div class="inquisitor-decree-box">
+                <div style="font-family: 'Cormorant Unicase', 'Cinzel', serif; color: var(--gold-bright); font-size: 1rem; font-weight: 700; margin-bottom: 0.6rem;">
+                    Воля Інквізитора (Зміна статусу обряду):
+                </div>
+                <form asp-action="ChangeStatus" method="post" style="display: flex; gap: 0.6rem;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="orderId" value="@Model.Id" />
+                    <select name="newStatus" class="holy-select">
+                        <option value="Pending" selected="@(Model.Status == HolyBackend.Core.Models.OrderStatus.Pending)">Pending (В очікуванні)</option>
+                        <option value="InProgress" selected="@(Model.Status == HolyBackend.Core.Models.OrderStatus.InProgress)">InProgress (В роботі)</option>
+                        <option value="Completed">Completed (Виконано +1 до рангу)</option>
+                        <option value="Cancelled">Cancelled (Скасовано)</option>
+                    </select>
+                    <button type="submit" class="btn-ritual btn-sm" style="padding: 0 1.2rem;">Вердикт</button>
+                </form>
+            </div>
+        }
+
+        <div style="margin-top: 1.4rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06);">
+            <a asp-action="Cabinet" style="color: #a1a1aa; font-size: 0.84rem; text-decoration: none; font-family: 'Cormorant Unicase', serif;">
+                ← Повернутися до Кабінету Замовлень
+            </a>
+        </div>
+    </div>
+
+    <div class="confession-chat-card">
+        <div class="chat-header-bar">
+            <div>
+                <h3 style="font-family: 'Cormorant Unicase', 'Cinzel', serif; color: var(--gold-bright); font-size: 1.5rem; margin-bottom: 2px;">
+                    Кімната Сповіді
+                </h3>
+                <div style="font-size: 0.78rem; color: #9ca3af;">
+                    Захищений канал зв'язку між Парафіянином та Інквізицією Ордену
+                </div>
+            </div>
+
+            <div class="live-sync-indicator">
+                <span class="live-sync-dot"></span>
+                <span>LIVE SYNC</span>
+            </div>
+        </div>
+
+        <div id="chatBox" class="chat-messages-viewport">
+            @if (!Model.Messages.Any())
+            {
+                <div style="color: #71717a; text-align: center; margin: auto; font-size: 0.88rem;">
+                    У Кімнаті Сповіді поки панує тиша. Напишіть перше послання...
+                </div>
+            }
+            else
+            {
+                @foreach (var msg in Model.Messages)
+                {
+                    bool isMsgAdmin = msg.Sender?.Role == "Admin";
+                    bool canManageMsg = isAdmin || msg.SenderId == currentUserId;
+                    string senderTitle = !string.IsNullOrEmpty(msg.Sender?.CustomTitle)
+                    ? msg.Sender.CustomTitle
+                    : (isMsgAdmin ? "Інквізитор" : "Парафіянин");
+
+                    <div class="chat-msg-bubble @(isMsgAdmin ? "inquisitor" : "client")" data-msg-id="@msg.Id">
+                        <div class="msg-header">
+                            <div>
+                                <span class="msg-author-name">@(msg.Sender?.UserName ?? "Невідомий")</span>
+                                <span class="msg-role-tag @(isMsgAdmin ? "admin" : "user")">
+                                    ✦ @senderTitle
+                                </span>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="color: #71717a; font-family: 'Fira Code', monospace; font-size: 0.72rem;">
+                                    @msg.SentAt.ToLocalTime().ToString("HH:mm dd.MM")
+                                </span>
+                                @if (canManageMsg)
+                                {
+                                    <button type="button" class="msg-icon-btn" onclick="toggleEditMsg('@msg.Id')" title="Редагувати">
+                                        <svg style="width:14px; height:14px; stroke:var(--accent-blue);" viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                            <path d="M12 20h9"></path>
+                                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                        </svg>
+                                    </button>
+                                    <form asp-action="DeleteMessage" method="post" style="display:inline;" onsubmit="return confirm('Видалити це повідомлення з хронік?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="messageId" value="@msg.Id" />
+                                        <input type="hidden" name="orderId" value="@Model.Id" />
+                                        <button type="submit" class="msg-icon-btn" title="Видалити">
+                                            <svg style="width:14px; height:14px; stroke:#f87171;" viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+
+                        <div id="msgText-@msg.Id" class="msg-body-text">@msg.Text</div>
+
+                        @if (canManageMsg)
+                        {
+                            <form id="editForm-@msg.Id" class="inline-edit-form" asp-action="EditMessage" method="post" style="display: none; margin-top: 8px; gap: 6px;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="messageId" value="@msg.Id" />
+                                <input type="hidden" name="orderId" value="@Model.Id" />
+                                <input type="text" name="newText" value="@msg.Text" required maxlength="1000"
+                                       style="flex:1; padding: 7px 10px; background: #06080d; color: #fff; border: 1px solid var(--accent-blue); border-radius: 6px; font-family: 'Fira Code', monospace; font-size: 0.82rem;" />
+                                <button type="submit" class="btn-ritual btn-sm">Зберегти</button>
+                            </form>
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        @if (Model.Status != HolyBackend.Core.Models.OrderStatus.Completed && Model.Status != HolyBackend.Core.Models.OrderStatus.Cancelled)
+        {
+            <!-- Швидкі канонічні фрази -->
+            <div class="quick-phrases-bar">
+                @if (isAdmin)
+                {
+                    <button type="button" class="quick-phrase-chip" onclick="insertQuickPhrase('Сповідь прийнято. Розпочинаємо архітектурний аналіз.')">+ Прийнято в роботу</button>
+                    <button type="button" class="quick-phrase-chip" onclick="insertQuickPhrase('Уточніть, будь ласка, деталі схеми бази даних та вимоги до API.')">+ Запит деталей БД</button>
+                    <button type="button" class="quick-phrase-chip" onclick="insertQuickPhrase('Екзорцизм багів завершено. Перевірте оновлений реліз.')">+ Реліз готовий</button>
+                }
+                else
+                {
+                    <button type="button" class="quick-phrase-chip" onclick="insertQuickPhrase('Вітаю! Чи є новини щодо мого обряду?')">+ Запитати статус</button>
+                    <button type="button" class="quick-phrase-chip" onclick="insertQuickPhrase('Додаю уточнення до технічного завдання: ')">+ Додати уточнення</button>
+                }
+            </div>
+
+            <form asp-action="AddMessage" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="orderId" value="@Model.Id" />
+                <div class="chat-input-row">
+                    <input type="text" id="chatMessageInput" name="messageText" class="chat-text-input"
+                           placeholder="Впишіть ваше послання у Кімнату Сповіді..." required maxlength="1000"
+                           oninput="updateCharCounter(this.value.length)" />
+                    <button type="submit" class="btn-ritual" style="padding: 0.72rem 1.5rem;">
+                        Надіслати ✦
+                    </button>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-family: 'Fira Code', monospace; font-size: 0.68rem; color: #71717a; margin-top: 5px;">
+                    <span>Захищено інспектором FluentValidation</span>
+                    <span id="charCounter">0 / 1000</span>
+                </div>
+            </form>
+        }
+        else
+        {
+            <div style="padding: 1rem; text-align: center; background: rgba(201,162,94,0.08); border: 1px dashed rgba(201,162,94,0.35); border-radius: 10px; font-family: 'Cormorant Unicase', serif; color: var(--gold-bright);">
+                Цей обряд вже закрито (@Model.Status). Кімната Сповіді переведена в режим архівного читання.
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const chatBox = document.getElementById('chatBox');
+        const orderId = '@Model.Id';
+        let knownMessageCount = @Model.Messages.Count;
+
+        if (chatBox) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function toggleEditMsg(id) {
+            const form = document.getElementById('editForm-' + id);
+            if (form) {
+                form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+            }
+        }
+
+        function insertQuickPhrase(text) {
+            const input = document.getElementById('chatMessageInput');
+            if (!input) return;
+            input.value = text;
+            input.focus();
+            updateCharCounter(input.value.length);
+        }
+
+        function updateCharCounter(len) {
+            const el = document.getElementById('charCounter');
+            if (el) el.textContent = `${len} / 1000`;
+        }
+
+        setInterval(async () => {
+                                  
+            const anyEditOpen = Array.from(document.querySelectorAll('.inline-edit-form'))
+                .some(f => f.style.display === 'flex');
+            if (anyEditOpen) return;
+
+            try {
+                const res = await fetch(`/Orders/GetMessagesJson/${orderId}`);
+                if (!res.ok) return;
+                const messages = await res.json();
+
+                if (messages.length !== knownMessageCount) {
+                    knownMessageCount = messages.length;
+                    window.location.reload();
+                }
+            } catch (e) { }
+        }, 4500);
+    </script>
+}

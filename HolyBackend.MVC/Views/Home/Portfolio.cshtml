@@ -1,0 +1,739 @@
+﻿@{
+    ViewData["Title"] = "Портфоліо";
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+<style>
+    .portfolio-sanctuary {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2.6rem;
+        padding: 0.5rem 0;
+    }
+
+    .portfolio-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        border-bottom: 1px solid rgba(201, 162, 94, 0.22);
+        padding-bottom: 1.4rem;
+    }
+
+    .relic-crest-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.75rem;
+        color: var(--accent-blue);
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+
+        .relic-crest-line::before {
+            content: "";
+            width: 24px;
+            height: 1px;
+            background: var(--primary-gold);
+            box-shadow: 0 0 8px var(--primary-gold);
+        }
+
+    .filter-bar {
+        display: flex;
+        gap: 0.55rem;
+        flex-wrap: wrap;
+        background: rgba(9, 11, 18, 0.85);
+        padding: 0.4rem;
+        border-radius: 50px;
+        border: 1px solid rgba(201, 162, 94, 0.25);
+    }
+
+    .filter-pill {
+        background: transparent;
+        border: 1px solid transparent;
+        color: #9ca3af;
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        padding: 0.42rem 1.15rem;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+
+        .filter-pill:hover {
+            color: var(--gold-bright);
+        }
+
+        .filter-pill.active {
+            background: linear-gradient(135deg, rgba(201, 162, 94, 0.26), rgba(56, 189, 248, 0.14));
+            border-color: var(--primary-gold);
+            color: #ffffff;
+            box-shadow: 0 0 16px rgba(201, 162, 94, 0.22);
+        }
+
+    .relics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.7rem;
+        perspective: 1200px;
+    }
+
+    .relic-card {
+        position: relative;
+        background: linear-gradient(180deg, rgba(15, 18, 29, 0.92) 0%, rgba(8, 10, 16, 0.96) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.28);
+        border-radius: 18px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.8), inset 0 0 25px rgba(0, 0, 0, 0.7);
+    }
+
+        .relic-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient( 350px circle at var(--rx, 50%) var(--ry, 0%), rgba(201, 162, 94, 0.15), rgba(56, 189, 248, 0.05) 45%, transparent 70% );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .relic-card:hover {
+            border-color: var(--primary-gold);
+            transform: translateY(-6px);
+            box-shadow: 0 24px 55px rgba(0, 0, 0, 0.92), 0 0 28px rgba(201, 162, 94, 0.18);
+        }
+
+    .relic-blueprint-stage {
+        position: relative;
+        height: 155px;
+        background: radial-gradient(circle at 50% 50%, rgba(22, 28, 45, 0.85), rgba(6, 8, 13, 0.98));
+        border-bottom: 1px solid rgba(201, 162, 94, 0.22);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+        .relic-blueprint-stage::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(201, 162, 94, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(201, 162, 94, 0.06) 1px, transparent 1px);
+            background-size: 22px 22px;
+            pointer-events: none;
+        }
+
+    .blueprint-svg {
+        width: 100%;
+        height: 130px;
+        z-index: 2;
+        filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.25));
+        transition: transform 0.4s ease;
+    }
+
+    .relic-card:hover .blueprint-svg {
+        transform: scale(1.06);
+    }
+
+    .relic-code-tag {
+        position: absolute;
+        top: 12px;
+        left: 14px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.68rem;
+        color: var(--gold-bright);
+        background: rgba(6, 8, 13, 0.85);
+        border: 1px solid rgba(201, 162, 94, 0.35);
+        padding: 2px 9px;
+        border-radius: 50px;
+        z-index: 3;
+    }
+
+    .relic-Metric-badge {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.68rem;
+        color: #4ade80;
+        background: rgba(6, 20, 14, 0.88);
+        border: 1px solid rgba(74, 222, 128, 0.35);
+        padding: 2px 9px;
+        border-radius: 50px;
+        z-index: 3;
+    }
+
+    .relic-body {
+        padding: 1.4rem 1.5rem 1.2rem;
+        position: relative;
+        z-index: 1;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .relic-stack {
+        font-family: 'Fira Code', monospace;
+        color: var(--accent-blue);
+        font-size: 0.74rem;
+        margin-bottom: 0.45rem;
+        letter-spacing: 0.4px;
+    }
+
+    .relic-title {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        color: #ffffff;
+        font-size: 1.35rem;
+        font-weight: 700;
+        margin-bottom: 0.55rem;
+        line-height: 1.2;
+    }
+
+    .relic-desc {
+        font-size: 0.84rem;
+        color: #b4b4bb;
+        line-height: 1.6;
+        margin-bottom: 1.2rem;
+        flex: 1;
+    }
+
+    .relic-stats-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.6rem;
+        padding: 0.65rem 0;
+        border-top: 1px solid rgba(201, 162, 94, 0.18);
+        border-bottom: 1px solid rgba(201, 162, 94, 0.18);
+        margin-bottom: 1.1rem;
+    }
+
+    .relic-stat-cell span {
+        display: block;
+        font-size: 0.68rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+    }
+
+    .relic-stat-cell strong {
+        font-family: 'Cinzel', serif;
+        font-size: 0.92rem;
+        color: var(--gold-bright);
+    }
+
+    .relic-actions {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+    }
+
+    .exorcism-comparison-box {
+        background: linear-gradient(180deg, rgba(13, 16, 26, 0.92) 0%, rgba(7, 9, 14, 0.96) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.35);
+        border-radius: 18px;
+        padding: 1.8rem 2rem;
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        gap: 2.5rem;
+        align-items: center;
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.85);
+    }
+
+    .audit-slider-wrap {
+        margin-top: 1.2rem;
+    }
+
+    .audit-range {
+        width: 100%;
+        accent-color: var(--primary-gold);
+        cursor: pointer;
+        height: 6px;
+    }
+
+    .telemetry-comparison-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .telemetry-box {
+        background: rgba(6, 8, 13, 0.9);
+        border: 1px solid rgba(201, 162, 94, 0.24);
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+    }
+
+    .inspect-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(3, 5, 9, 0.86);
+        backdrop-filter: blur(10px);
+        z-index: 2000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+    }
+
+        .inspect-backdrop.open {
+            display: flex;
+            animation: fadeModal 0.25s ease;
+        }
+
+    .inspect-modal {
+        max-width: 720px;
+        width: 100%;
+        background: radial-gradient(circle at top, rgba(201, 162, 94, 0.16), rgba(9, 11, 18, 0.98) 65%);
+        border: 1px solid var(--primary-gold);
+        border-radius: 20px;
+        padding: 2.2rem;
+        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.95), 0 0 35px rgba(201, 162, 94, 0.22);
+        position: relative;
+    }
+
+    .inspect-code-block {
+        background: #05070b;
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        border-left: 3px solid var(--accent-blue);
+        border-radius: 10px;
+        padding: 1rem;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.77rem;
+        color: #93c5fd;
+        overflow-x: auto;
+        white-space: pre;
+        margin: 1rem 0 1.4rem;
+    }
+
+    @@keyframes fadeModal {
+        from {
+            opacity: 0;
+            transform: scale(0.96);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @@media (max-width: 1080px) {
+        .relics-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .exorcism-comparison-box {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 700px) {
+        .relics-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="portfolio-sanctuary">
+    <div class="portfolio-header">
+        <div>
+            <div class="relic-crest-line">Opus Magnum Ordo</div>
+            <h1 class="gothic-title" style="margin-bottom: 0.2rem;">Портфоліо Ордену</h1>
+            <div class="subtitle-gold" style="margin-bottom: 0;">Галерея завершених обрядів та освячених архітектур</div>
+        </div>
+
+        <div class="filter-bar">
+            <button type="button" class="filter-pill active" onclick="filterRelics('all', this)">Усі діяння (6)</button>
+            <button type="button" class="filter-pill" onclick="filterRelics('web', this)">Веб-Собори</button>
+            <button type="button" class="filter-pill" onclick="filterRelics('backend', this)">Backend &amp; БД</button>
+            <button type="button" class="filter-pill" onclick="filterRelics('design', this)">Сакральний UI/UX</button>
+        </div>
+    </div>
+
+    <div class="relics-grid" id="relicsGrid">
+
+        <article class="relic-card" data-category="web design">
+            <div class="relic-blueprint-stage">
+                <span class="relic-code-tag">ARTIFACT #I</span>
+                <span class="relic-Metric-badge">99.9% UPTIME</span>
+                <svg class="blueprint-svg" viewBox="0 0 260 120" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="130,12 195,104 65,104" fill="rgba(201,162,94,0.08)" stroke="#c9a25e" stroke-width="1.8" />
+                    <circle cx="130" cy="64" r="24" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4 3" />
+                    <circle cx="130" cy="64" r="9" fill="#38bdf8" opacity="0.8" />
+                    <line x1="25" y1="64" x2="235" y2="64" stroke="rgba(201,162,94,0.35)" stroke-width="1" stroke-dasharray="3 3" />
+                </svg>
+            </div>
+            <div class="relic-body">
+                <div class="relic-stack">.NET 8 MVC • PostgreSQL • Custom SVG</div>
+                <h3 class="relic-title">Sanctuary Corporate Portal</h3>
+                <p class="relic-desc">
+                    Флагманський портал ІТ-ордену у неоготичному стилі з інтерактивним 3D-артефактом, системою рангів та живою кімнатою сповіді.
+                </p>
+                <div class="relic-stats-row">
+                    <div class="relic-stat-cell"><span>Архітектура</span><strong>DDD + UnitOfWork</strong></div>
+                    <div class="relic-stat-cell"><span>Відгук ядра</span><strong>18 ms</strong></div>
+                </div>
+                <div class="relic-actions">
+                    <button type="button" class="btn-blue btn-sm" style="flex: 1;" onclick="openInspectModal(0)">Дослідити архітектуру</button>
+                    @if (!isAdmin)
+                    {
+                        <a asp-controller="Orders" asp-action="Create" class="btn-ritual btn-sm">Замовити →</a>
+                    }
+                </div>
+            </div>
+        </article>
+
+        <article class="relic-card" data-category="web backend">
+            <div class="relic-blueprint-stage">
+                <span class="relic-code-tag">ARTIFACT #II</span>
+                <span class="relic-Metric-badge">0 LOST TX</span>
+                <svg class="blueprint-svg" viewBox="0 0 260 120" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="35" y="32" width="50" height="56" rx="6" fill="none" stroke="#c9a25e" stroke-width="1.8" />
+                    <rect x="105" y="22" width="50" height="76" rx="6" fill="rgba(56,189,248,0.08)" stroke="#38bdf8" stroke-width="1.8" />
+                    <rect x="175" y="32" width="50" height="56" rx="6" fill="none" stroke="#c9a25e" stroke-width="1.8" />
+                    <line x1="85" y1="60" x2="105" y2="60" stroke="#f3d088" stroke-width="2" />
+                    <line x1="155" y1="60" x2="175" y2="60" stroke="#f3d088" stroke-width="2" />
+                </svg>
+            </div>
+            <div class="relic-body">
+                <div class="relic-stack">ASP.NET Core • EF Core • REST API</div>
+                <h3 class="relic-title">Mercantile Cathedral E-Commerce</h3>
+                <p class="relic-desc">
+                    Високонавантажена торговельна платформа з атомарними транзакціями кошика, патерном Strategy для знижок та миттєвими сповіщеннями.
+                </p>
+                <div class="relic-stats-row">
+                    <div class="relic-stat-cell"><span>Транзакції/хв</span><strong>12,500+</strong></div>
+                    <div class="relic-stat-cell"><span>Надійність</span><strong>ACID Strict</strong></div>
+                </div>
+                <div class="relic-actions">
+                    <button type="button" class="btn-blue btn-sm" style="flex: 1;" onclick="openInspectModal(1)">Дослідити архітектуру</button>
+                    @if (!isAdmin)
+                    {
+                        <a asp-controller="Orders" asp-action="Create" class="btn-ritual btn-sm">Замовити →</a>
+                    }
+                </div>
+            </div>
+        </article>
+
+        <article class="relic-card" data-category="design web">
+            <div class="relic-blueprint-stage">
+                <span class="relic-code-tag">ARTIFACT #III</span>
+                <span class="relic-Metric-badge">60 FPS UI</span>
+                <svg class="blueprint-svg" viewBox="0 0 260 120" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="130" cy="60" r="42" fill="none" stroke="#c9a25e" stroke-width="1.6" />
+                    <polygon points="130,20 170,60 130,100 90,60" fill="rgba(201,162,94,0.1)" stroke="#f3d088" stroke-width="1.6" />
+                    <polygon points="102,32 158,32 158,88 102,88" fill="none" stroke="#38bdf8" stroke-width="1.4" />
+                    <circle cx="130" cy="60" r="6" fill="#f3d088" />
+                </svg>
+            </div>
+            <div class="relic-body">
+                <div class="relic-stack">UI/UX • 3D Parallax • Custom Shaders</div>
+                <h3 class="relic-title">Chronicles of Void Lore Portal</h3>
+                <p class="relic-desc">
+                    Інтерактивний лорний веб-світ із багаторівневим паралаксом, динамічним освітленням за курсором та інтегрованим кабінетом гравця.
+                </p>
+                <div class="relic-stats-row">
+                    <div class="relic-stat-cell"><span>Візуальний ранг</span><strong>Gold Canon</strong></div>
+                    <div class="relic-stat-cell"><span>Конверсія</span><strong>+64%</strong></div>
+                </div>
+                <div class="relic-actions">
+                    <button type="button" class="btn-blue btn-sm" style="flex: 1;" onclick="openInspectModal(2)">Дослідити архітектуру</button>
+                    @if (!isAdmin)
+                    {
+                        <a asp-controller="Orders" asp-action="Create" class="btn-ritual btn-sm">Замовити →</a>
+                    }
+                </div>
+            </div>
+        </article>
+
+        <article class="relic-card" data-category="backend web">
+            <div class="relic-blueprint-stage">
+                <span class="relic-code-tag">ARTIFACT #IV</span>
+                <span class="relic-Metric-badge">RLS SECURED</span>
+                <svg class="blueprint-svg" viewBox="0 0 260 120" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 130 16 L 175 34 L 175 68 C 175 90 130 106 130 106 C 130 106 85 90 85 68 L 85 34 Z" fill="rgba(56,189,248,0.08)" stroke="#38bdf8" stroke-width="1.8" />
+                    <line x1="130" y1="42" x2="130" y2="78" stroke="#f3d088" stroke-width="2.5" />
+                    <line x1="112" y1="60" x2="148" y2="60" stroke="#f3d088" stroke-width="2.5" />
+                </svg>
+            </div>
+            <div class="relic-body">
+                <div class="relic-stack">.NET 8 • PostgreSQL RLS • Clean Arch</div>
+                <h3 class="relic-title">Aegis Telemedicine Sanctuary</h3>
+                <p class="relic-desc">
+                    Захищена платформа онлайн-консультацій із криптографічною згодою пацієнтів, ізоляцією даних та захистом від Vendor Lock-in.
+                </p>
+                <div class="relic-stats-row">
+                    <div class="relic-stat-cell"><span>Безпека даних</span><strong>Zero-Trust</strong></div>
+                    <div class="relic-stat-cell"><span>Доступність</span><strong>24/7 Cloud</strong></div>
+                </div>
+                <div class="relic-actions">
+                    <button type="button" class="btn-blue btn-sm" style="flex: 1;" onclick="openInspectModal(3)">Дослідити архітектуру</button>
+                    @if (!isAdmin)
+                    {
+                        <a asp-controller="Orders" asp-action="Create" class="btn-ritual btn-sm">Замовити →</a>
+                    }
+                </div>
+            </div>
+        </article>
+
+        <article class="relic-card" data-category="backend">
+            <div class="relic-blueprint-stage">
+                <span class="relic-code-tag">ARTIFACT #V</span>
+                <span class="relic-Metric-badge">-78% LATENCY</span>
+                <svg class="blueprint-svg" viewBox="0 0 260 120" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="65" cy="60" r="18" fill="none" stroke="#c9a25e" stroke-width="1.8" />
+                    <circle cx="130" cy="34" r="16" fill="none" stroke="#38bdf8" stroke-width="1.8" />
+                    <circle cx="130" cy="86" r="16" fill="none" stroke="#38bdf8" stroke-width="1.8" />
+                    <circle cx="195" cy="60" r="18" fill="none" stroke="#c9a25e" stroke-width="1.8" />
+                    <line x1="82" y1="53" x2="114" y2="39" stroke="#f3d088" stroke-width="1.5" />
+                    <line x1="82" y1="67" x2="114" y2="81" stroke="#f3d088" stroke-width="1.5" />
+                    <line x1="146" y1="39" x2="178" y2="53" stroke="#f3d088" stroke-width="1.5" />
+                    <line x1="146" y1="81" x2="178" y2="67" stroke="#f3d088" stroke-width="1.5" />
+                </svg>
+            </div>
+            <div class="relic-body">
+                <div class="relic-stack">PostgreSQL CTE • Triggers • Indexing</div>
+                <h3 class="relic-title">AquaFlow Municipal Telemetry</h3>
+                <p class="relic-desc">
+                    Високопродуктивне ядро обліку та диспетчеризації міських мереж із рекурсивними CTE-запитами, тригерами аудиту та індексацією.
+                </p>
+                <div class="relic-stats-row">
+                    <div class="relic-stat-cell"><span>Швидкість SQL</span><strong>x4.8 швидше</strong></div>
+                    <div class="relic-stat-cell"><span>Цілісність</span><strong>100% Audit</strong></div>
+                </div>
+                <div class="relic-actions">
+                    <button type="button" class="btn-blue btn-sm" style="flex: 1;" onclick="openInspectModal(4)">Дослідити архітектуру</button>
+                    @if (!isAdmin)
+                    {
+                        <a asp-controller="Orders" asp-action="Create" class="btn-ritual btn-sm">Замовити →</a>
+                    }
+                </div>
+            </div>
+        </article>
+
+        <article class="relic-card" data-category="design backend">
+            <div class="relic-blueprint-stage">
+                <span class="relic-code-tag">ARTIFACT #VI</span>
+                <span class="relic-Metric-badge">REALTIME CRM</span>
+                <svg class="blueprint-svg" viewBox="0 0 260 120" xmlns="http://www.w3.org/2000/svg">
+                    <polyline points="35,90 85,65 130,74 175,38 225,24" fill="none" stroke="#38bdf8" stroke-width="2.5" />
+                    <circle cx="85" cy="65" r="4" fill="#f3d088" />
+                    <circle cx="130" cy="74" r="4" fill="#f3d088" />
+                    <circle cx="175" cy="38" r="4" fill="#f3d088" />
+                    <circle cx="225" cy="24" r="5" fill="#4ade80" />
+                </svg>
+            </div>
+            <div class="relic-body">
+                <div class="relic-stack">ASP.NET Core • Observer • FluentValidation</div>
+                <h3 class="relic-title">Inquisition Grimoire CRM</h3>
+                <p class="relic-desc">
+                    Внутрішня система управління клієнтами, автоматичної канонізації спонсорів, живого чату сповідей та аналітики діянь за періодами.
+                </p>
+                <div class="relic-stats-row">
+                    <div class="relic-stat-cell"><span>Автоматизація</span><strong>Observer + Strategy</strong></div>
+                    <div class="relic-stat-cell"><span>Захист вводу</span><strong>Anti-Heresy</strong></div>
+                </div>
+                <div class="relic-actions">
+                    <button type="button" class="btn-blue btn-sm" style="flex: 1;" onclick="openInspectModal(5)">Дослідити архітектуру</button>
+                    @if (!isAdmin)
+                    {
+                        <a asp-controller="Orders" asp-action="Create" class="btn-ritual btn-sm">Замовити →</a>
+                    }
+                </div>
+            </div>
+        </article>
+
+    </div>
+
+    <div class="exorcism-comparison-box">
+        <div>
+            <div class="relic-crest-line">Transformatio Codicis</div>
+            <h3 style="font-family: 'Cormorant Unicase', 'Cinzel', serif; font-size: 1.65rem; color: var(--gold-bright); margin-bottom: 0.4rem;">
+                Інтерактивний Стенд: До та Після Екзорцизму
+            </h3>
+            <p style="font-size: 0.86rem; color: #a1a1aa; line-height: 1.6;">
+                Переміщуйте повзунок освячення коду, щоб побачити, як сирий моноліт із технічним боргом перетворюється на швидкодійну архітектуру Ордену.
+            </p>
+
+            <div class="audit-slider-wrap">
+                <div style="display: flex; justify-content: space-between; font-family: 'Cinzel', serif; font-size: 0.78rem; margin-bottom: 6px;">
+                    <span style="color: #f87171;">0% (Грішний Легасі)</span>
+                    <span id="sanctifyPercentLabel" style="color: var(--accent-blue); font-weight: 700;">Рівень освячення: 100%</span>
+                    <span style="color: #4ade80;">100% (Канон Ордену)</span>
+                </div>
+                <input type="range" min="0" max="100" value="100" class="audit-range" id="sanctifyRange" oninput="updateExorcismDemo(this.value)" />
+            </div>
+        </div>
+
+        <div class="telemetry-comparison-grid">
+            <div class="telemetry-box">
+                <div style="font-size: 0.72rem; color: #9ca3af; text-transform: uppercase;">Час відповіді БД (SQL Latency)</div>
+                <div id="demoLatency" style="font-family: 'Cinzel', serif; font-size: 1.55rem; color: #4ade80; font-weight: 700; margin: 4px 0;">14 ms</div>
+                <div id="demoLatencySub" style="font-size: 0.74rem; color: #a1a1aa;">Пулінг Supavisor + Індекси</div>
+            </div>
+
+            <div class="telemetry-box">
+                <div style="font-size: 0.72rem; color: #9ca3af; text-transform: uppercase;">Кількість необроблених збоїв</div>
+                <div id="demoExceptions" style="font-family: 'Cinzel', serif; font-size: 1.55rem; color: var(--gold-bright); font-weight: 700; margin: 4px 0;">0 Exceptions</div>
+                <div id="demoExceptionsSub" style="font-size: 0.74rem; color: #a1a1aa;">FluentValidation + EnableRetry</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="inspect-backdrop" id="inspectBackdrop" onclick="if(event.target === this) closeInspectModal()">
+    <div class="inspect-modal">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+                <div id="modalTag" style="font-family: 'Fira Code', monospace; font-size: 0.75rem; color: var(--accent-blue); letter-spacing: 2px;">ARTIFACT SPECIFICATION</div>
+                <h2 id="modalTitle" style="font-family: 'Cormorant Unicase', 'Cinzel', serif; font-size: 1.85rem; color: var(--gold-bright);">Назва Проєкту</h2>
+            </div>
+            <button type="button" onclick="closeInspectModal()" style="background: none; border: 1px solid rgba(201,162,94,0.35); color: #d4d4d8; width: 34px; height: 34px; border-radius: 50%; cursor: pointer;">✕</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1rem;">
+            <div style="background: rgba(20, 10, 14, 0.75); border: 1px solid rgba(248, 113, 113, 0.3); border-radius: 10px; padding: 0.9rem;">
+                <div style="font-family: 'Cinzel', serif; font-size: 0.75rem; color: #f87171; margin-bottom: 4px;">ВИКЛИК (ПОЧАТКОВИЙ ГРІХ)</div>
+                <p id="modalChallenge" style="font-size: 0.83rem; color: #e4e4e7; line-height: 1.5;"></p>
+            </div>
+            <div style="background: rgba(10, 20, 16, 0.75); border: 1px solid rgba(74, 222, 128, 0.3); border-radius: 10px; padding: 0.9rem;">
+                <div style="font-family: 'Cinzel', serif; font-size: 0.75rem; color: #4ade80; margin-bottom: 4px;">РІШЕННЯ ОРДЕНУ</div>
+                <p id="modalSolution" style="font-size: 0.83rem; color: #e4e4e7; line-height: 1.5;"></p>
+            </div>
+        </div>
+
+        <div style="font-family: 'Cinzel', serif; font-size: 0.75rem; color: var(--primary-gold); letter-spacing: 1px;">ФРАГМЕНТ ОСВЯЧЕНОГО ЯДРА:</div>
+        <div class="inspect-code-block" id="modalCode"></div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div id="modalMetrics" style="font-family: 'Fira Code', monospace; font-size: 0.8rem; color: var(--accent-blue);"></div>
+            <div style="display: flex; gap: 0.8rem;">
+                <button type="button" class="btn-danger btn-sm" onclick="closeInspectModal()">Закрити сувій</button>
+                @if (!isAdmin)
+                {
+                    <a asp-controller="Orders" asp-action="Create" class="btn-ritual btn-sm">Замовити аналогічну архітектуру →</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('mousemove', (e) => {
+            document.querySelectorAll('.relic-card').forEach(card => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--rx', `${e.clientX - rect.left}px`);
+                card.style.setProperty('--ry', `${e.clientY - rect.top}px`);
+            });
+        });
+        function filterRelics(category, btn) {
+            document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            document.querySelectorAll('.relic-card').forEach(card => {
+                const cats = card.getAttribute('data-category') || '';
+                if (category === 'all' || cats.includes(category)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+      
+        function updateExorcismDemo(val) {
+            const pct = parseInt(val, 10);
+            document.getElementById('sanctifyPercentLabel').textContent = `Рівень освячення: ${pct}%`;
+
+                                        
+            const latency = Math.round(680 - (pct * 6.66));
+            const exceptions = Math.round((100 - pct) * 0.42);
+
+            const latEl = document.getElementById('demoLatency');
+            const excEl = document.getElementById('demoExceptions');
+
+            latEl.textContent = `${latency} ms`;
+            latEl.style.color = pct > 60 ? '#4ade80' : (pct > 30 ? '#facc15' : '#f87171');
+
+            excEl.textContent = `${exceptions} Exceptions`;
+            excEl.style.color = exceptions === 0 ? 'var(--gold-bright)' : '#f87171';
+        }
+
+              
+      
+        const portfolioSpecs = [
+            {
+                tag: "ARTIFACT #I • .NET 8 MVC & SUPABASE",
+                title: "Sanctuary Corporate Portal",
+                challenge: "Стандартні корпоративні сайти виглядають шаблонно, а прямі виклики БД у контролерах унеможливлюють масштабування.",
+                solution: "Трирівнева Clean Architecture (Core, DAL, MVC) із патернами Strategy, Factory, Observer та інтерактивним 3D-вівтарем на чистій векторній графіці.",
+                code: "public async Task<Order> CreateOrderAsync(string title, string desc, OrderType type, string clientId)\n{\n    var order = _orderFactory.CreateOrder(title, desc, type, clientId);\n    await _orderValidator.ValidateAndThrowAsync(order);\n    await _unitOfWork.Orders.AddAsync(order);\n    await _unitOfWork.SaveChangesAsync();\n    return order;\n}",
+                metrics: "Uptime: 99.98% | Lighthouse UI: 98/100 | 0 SQL Leaks"
+            },
+            {
+                tag: "ARTIFACT #II • HIGHLOAD E-COMMERCE",
+                title: "Mercantile Cathedral E-Commerce",
+                challenge: "Втрата замовлень під час пікових навантажень та розсинхронізація складських залишків при одночасній оплаті.",
+                solution: "Впроваджено патерн Unit of Work із явними транзакціями BeginTransactionAsync / CommitTransactionAsync та пулінгом з'єднань PostgreSQL.",
+                code: "await _unitOfWork.BeginTransactionAsync();\ntry {\n    await _unitOfWork.Orders.AddAsync(order);\n    await _unitOfWork.CommitTransactionAsync();\n} catch {\n    await _unitOfWork.RollbackTransactionAsync();\n    throw;\n}",
+                metrics: "Throughput: 12,500 tx/min | ACID Compliance: 100%"
+            },
+            {
+                tag: "ARTIFACT #III • INTERACTIVE UI/UX",
+                title: "Chronicles of Void Lore Portal",
+                challenge: "Важкі растрові ілюстрації гальмували завантаження сторінки та виглядали розмито на Retina-екранах.",
+                solution: "Повний перехід на багатошарову параметричну SVG-графіку з 3D-паралаксом у реальному часі за координатами курсора.",
+                code: "const rotX = ((e.clientY - innerHeight / 2) / (innerHeight / 2)) * -12;\nconst rotY = ((e.clientX - innerWidth / 2) / (innerWidth / 2)) * 12;\nartifact.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;",
+                metrics: "Frame Rate: 60 FPS | Завантаження першого екрана: 0.4s"
+            },
+            {
+                tag: "ARTIFACT #IV • TELEMEDICINE PLATFORM",
+                title: "Aegis Telemedicine Sanctuary",
+                challenge: "Суворі вимоги до конфіденційності медичних консультацій та ризик блокування проєкту у випадку зміни хмарного провайдера.",
+                solution: "Чиста доменна модель за інверсією залежностей (DIP) з розмежуванням прав доступу на рівні рядків БД та криптографічною верифікацією.",
+                code: "RuleFor(x => x.Text)\n    .NotEmpty()\n    .MaximumLength(1000)\n    .Must(NotContainHeresyOrInjections)\n    .WithMessage(\"Виявлено спробу ін'єкції або заборонений код!\");",
+                metrics: "Security Audit: Passed | Architecture: Vendor-Agnostic"
+            },
+            {
+                tag: "ARTIFACT #V • ENTERPRISE DATABASE",
+                title: "AquaFlow Municipal Telemetry",
+                challenge: "Повільна побудова ієрархічних звітів по інженерних вузлах міста (понад 4.5 секунди на один запит).",
+                solution: "Спроектовано реляційну схему PostgreSQL із рекурсивними CTE, композитними B-Tree індексами та автоматичними тригерами.",
+                code: "WITH RECURSIVE NetworkTree AS (\n    SELECT id, parent_id, pressure FROM nodes WHERE parent_id IS NULL\n    UNION ALL\n    SELECT n.id, n.parent_id, n.pressure FROM nodes n\n    INNER JOIN NetworkTree nt ON n.parent_id = nt.id\n)\nSELECT * FROM NetworkTree;",
+                metrics: "Час виконання запиту: з 4500 ms до 18 ms"
+            },
+            {
+                tag: "ARTIFACT #VI • REALTIME CRM & ANALYTICS",
+                title: "Inquisition Grimoire CRM",
+                challenge: "Відсутність прозорої системи лояльності клієнтів та ручне адміністрування порушників без фіксації термінів блокування.",
+                solution: "Автоматичний розрахунок титулів через патерн Strategy, канонізація спонсорів при 5+ закритих проєктах та система тимчасових банів з авто-зняттям.",
+                code: "if (client.CompletedOrdersCount >= 5)\n{\n    client.IsHolySponsor = true;\n}\nclient.CustomTitle = _rankContext.CalculateTitle(client.CompletedOrdersCount, client.IsHolySponsor);",
+                metrics: "Автоматизація CRM: 100% | Живий чат сповідей: Polling 4s"
+            }
+        ];
+
+        function openInspectModal(idx) {
+            const spec = portfolioSpecs[idx];
+            document.getElementById('modalTag').textContent = spec.tag;
+            document.getElementById('modalTitle').textContent = spec.title;
+            document.getElementById('modalChallenge').textContent = spec.challenge;
+            document.getElementById('modalSolution').textContent = spec.solution;
+            document.getElementById('modalCode').textContent = spec.code;
+            document.getElementById('modalMetrics').textContent = spec.metrics;
+            document.getElementById('inspectBackdrop').classList.add('open');
+        }
+
+        function closeInspectModal() {
+            document.getElementById('inspectBackdrop').classList.remove('open');
+        }
+    </script>
+}

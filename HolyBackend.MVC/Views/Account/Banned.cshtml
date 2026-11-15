@@ -1,0 +1,347 @@
+﻿@model HolyBackend.MVC.Models.BanDetailsViewModel
+@{
+    ViewData["Title"] = "Анафема Інквізиції";
+    bool isPermanent = !Model.BannedUntil.HasValue;
+}
+
+<style>
+    .anathema-sanctuary-wrap {
+        max-width: 680px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 0.5rem 0;
+    }
+
+    .anathema-tribunal-card {
+        position: relative;
+        background: radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.22), rgba(9, 8, 13, 0.98) 70%);
+        border: 1.5px solid rgba(239, 68, 68, 0.65);
+        border-radius: 22px;
+        padding: 2.6rem 2.4rem 2.2rem;
+        text-align: center;
+        box-shadow: 0 25px 65px rgba(0, 0, 0, 0.95), 0 0 45px rgba(239, 68, 68, 0.2), inset 0 0 35px rgba(239, 68, 68, 0.08);
+        overflow: hidden;
+    }
+
+        .anathema-tribunal-card::after {
+            content: "";
+            position: absolute;
+            inset: 8px;
+            border: 1px dashed rgba(248, 113, 113, 0.24);
+            border-radius: 16px;
+            pointer-events: none;
+        }
+
+    .tribunal-sigil-wrap {
+        width: 112px;
+        height: 112px;
+        margin: 0 auto 1.2rem;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tribunal-ring-outer {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 1px dashed rgba(248, 113, 113, 0.65);
+        box-shadow: 0 0 30px rgba(239, 68, 68, 0.35), inset 0 0 20px rgba(239, 68, 68, 0.25);
+        animation: spinTribunalCW 42s linear infinite;
+    }
+
+    .tribunal-ring-inner {
+        position: absolute;
+        inset: 12px;
+        border-radius: 50%;
+        border: 1px solid rgba(201, 162, 94, 0.35);
+        border-top: 2px solid #ef4444;
+        border-bottom: 2px solid var(--primary-gold);
+        animation: spinTribunalCCW 26s linear infinite;
+    }
+
+    .tribunal-scales-svg {
+        width: 62px;
+        height: 62px;
+        filter: drop-shadow(0 0 14px rgba(239, 68, 68, 0.7));
+        z-index: 2;
+    }
+
+    .decree-tag-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.74rem;
+        color: #f87171;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+    }
+
+        .decree-tag-line::before,
+        .decree-tag-line::after {
+            content: "";
+            width: 22px;
+            height: 1px;
+            background: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
+        }
+
+    .anathema-main-title {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        color: #f87171;
+        font-size: 3.1rem;
+        font-weight: 700;
+        line-height: 1.08;
+        text-shadow: 0 0 28px rgba(239, 68, 68, 0.55);
+        margin-bottom: 0.5rem;
+    }
+
+    .anathema-subtitle {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-style: italic;
+        color: #fca5a5;
+        font-size: 1.2rem;
+        margin-bottom: 1.6rem;
+    }
+
+    .verdict-scroll-box {
+        background: rgba(5, 5, 8, 0.92);
+        border: 1px solid rgba(248, 113, 113, 0.42);
+        border-left: 4px solid #ef4444;
+        border-radius: 14px;
+        padding: 1.35rem 1.5rem;
+        text-align: left;
+        margin-bottom: 1.6rem;
+        position: relative;
+        box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.85);
+    }
+
+    .verdict-scroll-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: 'Cinzel', serif;
+        color: var(--primary-gold);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        margin-bottom: 0.55rem;
+        padding-bottom: 0.45rem;
+        border-bottom: 1px solid rgba(248, 113, 113, 0.18);
+    }
+
+    .verdict-reason-text {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-size: 1.28rem;
+        color: #ffffff;
+        line-height: 1.45;
+    }
+
+    .penance-timer-panel {
+        padding: 1.3rem 1.5rem;
+        border-radius: 14px;
+        background: rgba(14, 12, 18, 0.9);
+        border: 1px solid rgba(201, 162, 94, 0.3);
+        margin-bottom: 1.8rem;
+    }
+
+    .chronometer-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
+        max-width: 440px;
+        margin: 0.9rem auto 0;
+    }
+
+    .chrono-cell {
+        background: rgba(5, 6, 10, 0.95);
+        border: 1px solid rgba(56, 189, 248, 0.32);
+        border-radius: 10px;
+        padding: 0.6rem 0.4rem;
+    }
+
+    .chrono-val {
+        font-family: 'Cinzel', serif;
+        font-size: 1.45rem;
+        font-weight: 800;
+        color: var(--accent-blue);
+        line-height: 1.1;
+        text-shadow: 0 0 12px var(--blue-glow);
+    }
+
+    .chrono-lbl {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.65rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        margin-top: 2px;
+    }
+
+    .anathema-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 2;
+    }
+
+    @@keyframes spinTribunalCW {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@keyframes spinTribunalCCW {
+        from {
+            transform: rotate(360deg);
+        }
+
+        to {
+            transform: rotate(0deg);
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .anathema-main-title {
+            font-size: 2.35rem;
+        }
+
+        .chronometer-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+
+<div class="anathema-sanctuary-wrap">
+    <div class="anathema-tribunal-card">
+        <div class="tribunal-sigil-wrap">
+            <div class="tribunal-ring-outer"></div>
+            <div class="tribunal-ring-inner"></div>
+            <svg class="tribunal-scales-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="32,4 60,32 32,60 4,32" fill="rgba(18, 8, 12, 0.9)" stroke="#ef4444" stroke-width="2" />
+                <line x1="32" y1="10" x2="32" y2="54" stroke="#f3d088" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M 14 24 L 32 28 L 50 24" fill="none" stroke="#c9a25e" stroke-width="2.2" stroke-linecap="round" />
+                <path d="M 14 24 L 10 36 L 18 36 Z" fill="none" stroke="#f87171" stroke-width="1.6" stroke-linejoin="round" />
+                <path d="M 50 24 L 46 36 L 54 36 Z" fill="none" stroke="#f87171" stroke-width="1.6" stroke-linejoin="round" />
+                <circle cx="32" cy="26" r="3" fill="#ef4444" />
+            </svg>
+        </div>
+
+        <div class="decree-tag-line">Excommunicatio Major • Tribunal Verdict</div>
+        <h1 class="anathema-main-title">На вас накладено Анафему</h1>
+
+        <div class="anathema-subtitle">
+            Трибунал Інквізиції обмежив доступ до святилища для акаунта
+            <strong style="color: #ffffff; font-style: normal;">@Model.UserName</strong>
+            <span style="font-family: 'Fira Code', monospace; font-size: 0.85rem; font-style: normal; color: #9ca3af;">(@Model.Email)</span>
+        </div>
+
+        <div class="verdict-scroll-box">
+            <div class="verdict-scroll-header">
+                <span>ОФІЦІЙНИЙ ВИРОК ТРИБУНАЛУ</span>
+                <span style="font-family: 'Fira Code', monospace; color: #f87171;">CODEX_PENALIS</span>
+            </div>
+            <div class="verdict-reason-text">
+                «@Model.Reason»
+            </div>
+        </div>
+
+        <div class="penance-timer-panel">
+            @if (isPermanent)
+            {
+                <div style="font-family: 'Cinzel', serif; color: #f87171; font-weight: 700; font-size: 1.05rem; letter-spacing: 1px;">
+                    ТЕРМІН ВИГНАННЯ: ДОВІЧНА АНАФЕМА (БЕЗСТРОКОВО)
+                </div>
+                <div style="font-size: 0.84rem; color: #9ca3af; margin-top: 6px;">
+                    Тільки Верховний Інквізитор Ордену може дарувати вам помилування та зняти печатку відлучення.
+                </div>
+            }
+            else
+            {
+                <div style="font-family: 'Cormorant Unicase', 'Cinzel', serif; color: var(--gold-bright); font-size: 1.05rem; font-weight: 700;">
+                    Спокута гріхів триватиме до:
+                    <span style="font-family: 'Fira Code', monospace; color: #ffffff; font-size: 0.95rem;">
+                        @Model.BannedUntil.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                    </span>
+                </div>
+
+                <div id="banExpiredNotice" style="display: none; margin-top: 0.8rem; color: #4ade80; font-family: 'Cormorant Unicase', serif; font-size: 1.1rem; font-weight: 700;">
+                    ✦ Час спокути завершився! Печатку Анафеми знято — ви можете знову увійти в Храм.
+                </div>
+
+                <div class="chronometer-grid" id="chronoGrid">
+                    <div class="chrono-cell">
+                        <div class="chrono-val" id="cdDays">00</div>
+                        <div class="chrono-lbl">Днів</div>
+                    </div>
+                    <div class="chrono-cell">
+                        <div class="chrono-val" id="cdHours">00</div>
+                        <div class="chrono-lbl">Годин</div>
+                    </div>
+                    <div class="chrono-cell">
+                        <div class="chrono-val" id="cdMins">00</div>
+                        <div class="chrono-lbl">Хвилин</div>
+                    </div>
+                    <div class="chrono-cell">
+                        <div class="chrono-val" id="cdSecs">00</div>
+                        <div class="chrono-lbl">Секунд</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="anathema-actions">
+            <a asp-controller="Home" asp-action="Index" class="btn-ritual" style="padding: 0.78rem 1.8rem;">
+                Повернутися на Головну
+            </a>
+            <a asp-controller="Account" asp-action="Login" class="btn-blue" style="padding: 0.78rem 1.8rem;">
+                Увійти під іншою печаткою →
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (!isPermanent)
+{
+    @section Scripts {
+        <script>
+            const targetDate = new Date('@Model.BannedUntil.Value.ToString("yyyy-MM-ddTHH:mm:ssZ")');
+            const chronoGrid = document.getElementById('chronoGrid');
+            const expiredNotice = document.getElementById('banExpiredNotice');
+
+            function pad2(n) {
+                return String(n).padStart(2, '0');
+            }
+
+            function updateTimer() {
+                const diff = targetDate - new Date();
+                if (diff <= 0) {
+                    if (chronoGrid) chronoGrid.style.display = 'none';
+                    if (expiredNotice) expiredNotice.style.display = 'block';
+                    return;
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const mins = Math.floor((diff / (1000 * 60)) % 60);
+                const secs = Math.floor((diff / 1000) % 60);
+
+                document.getElementById('cdDays').textContent = pad2(days);
+                document.getElementById('cdHours').textContent = pad2(hours);
+                document.getElementById('cdMins').textContent = pad2(mins);
+                document.getElementById('cdSecs').textContent = pad2(secs);
+            }
+
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        </script>
+    }
+}

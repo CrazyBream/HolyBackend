@@ -1,0 +1,348 @@
+﻿@model IEnumerable<HolyBackend.MVC.Models.HolySponsorViewModel>
+@{
+    ViewData["Title"] = "Святі Спонсори";
+    bool isAdmin = User.IsInRole("Admin");
+    var candidates = ViewBag.Candidates as IEnumerable<HolyBackend.Core.Models.ApplicationUser>;
+}
+
+<style>
+    .sponsors-sanctuary {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+        padding: 0.5rem 0;
+    }
+
+    .sponsors-intro {
+        text-align: center;
+        max-width: 720px;
+        margin: 0 auto;
+    }
+
+    .pantheon-crest-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.75rem;
+        color: var(--accent-blue);
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+
+        .pantheon-crest-line::before,
+        .pantheon-crest-line::after {
+            content: "";
+            width: 20px;
+            height: 1px;
+            background: var(--primary-gold);
+            box-shadow: 0 0 8px var(--primary-gold);
+        }
+
+    .admin-inquisition-panel {
+        background: linear-gradient(180deg, rgba(14, 18, 28, 0.94) 0%, rgba(8, 10, 16, 0.98) 100%);
+        border: 1px dashed var(--accent-blue);
+        border-radius: 18px;
+        padding: 2rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2.5rem;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), inset 0 0 25px rgba(56, 189, 248, 0.06);
+    }
+
+    .inquisition-box-title {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-bottom: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+
+    .holy-field {
+        width: 100%;
+        padding: 11px 14px;
+        background: #05070b;
+        border: 1px solid rgba(201, 162, 94, 0.3);
+        color: #fff;
+        border-radius: 9px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.84rem;
+        margin-bottom: 0.8rem;
+        transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+        .holy-field:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+        }
+
+    .sponsors-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
+        perspective: 1200px;
+    }
+
+    .patron-card {
+        position: relative;
+        background: radial-gradient(circle at top, rgba(201, 162, 94, 0.18), rgba(11, 14, 22, 0.95) 70%);
+        border: 1px solid var(--primary-gold);
+        border-radius: 20px;
+        padding: 2.4rem 2rem 2rem;
+        text-align: center;
+        transform-style: preserve-3d;
+        transition: transform 0.2s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.85), 0 0 28px rgba(201, 162, 94, 0.14);
+        overflow: hidden;
+    }
+
+        .patron-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient( 300px circle at var(--cx, 50%) var(--cy, 0%), rgba(201, 162, 94, 0.22), rgba(56, 189, 248, 0.08) 45%, transparent 70% );
+            pointer-events: none;
+        }
+
+        .patron-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--gold-bright);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 40px var(--gold-glow);
+        }
+
+    .patron-crown-wrap {
+        width: 76px;
+        height: 76px;
+        margin: 0 auto 1.2rem;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .crown-halo {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 1px dashed rgba(243, 208, 136, 0.6);
+        box-shadow: 0 0 25px rgba(201, 162, 94, 0.35), inset 0 0 15px rgba(201, 162, 94, 0.2);
+        animation: spinCrownHalo 40s linear infinite;
+    }
+
+    .crown-svg {
+        width: 44px;
+        height: 44px;
+        filter: drop-shadow(0 0 10px rgba(243, 208, 136, 0.65));
+        z-index: 2;
+    }
+
+    .patron-name {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.35rem;
+    }
+
+    .patron-title-badge {
+        display: inline-block;
+        padding: 4px 14px;
+        border-radius: 50px;
+        background: rgba(201, 162, 94, 0.18);
+        border: 1px solid var(--primary-gold);
+        color: var(--gold-bright);
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-bottom: 1.4rem;
+        box-shadow: 0 0 12px rgba(201, 162, 94, 0.15);
+    }
+
+    .patron-stats-split {
+        display: flex;
+        justify-content: space-around;
+        padding: 0.95rem 0;
+        border-top: 1px solid rgba(201, 162, 94, 0.25);
+        border-bottom: 1px solid rgba(201, 162, 94, 0.25);
+        margin-bottom: 1.2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .patron-stat-val {
+        font-family: 'Cinzel', serif;
+        font-size: 1.35rem;
+        font-weight: 700;
+    }
+
+    .patron-stat-lbl {
+        font-size: 0.72rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        margin-top: 2px;
+    }
+
+    .empty-pantheon-box {
+        background: var(--card-bg);
+        border: 1px solid var(--border-subtle);
+        border-radius: 18px;
+        text-align: center;
+        padding: 3.5rem 2rem;
+        box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+    }
+
+    @@keyframes spinCrownHalo {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@media (max-width: 900px) {
+        .admin-inquisition-panel {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="sponsors-sanctuary">
+    <div class="sponsors-intro">
+        <div class="pantheon-crest-line">Sanctuarium Patronorum</div>
+        <h1 class="gothic-title" style="margin-bottom: 0.3rem;">Пантеон Святих Спонсорів</h1>
+        <div class="subtitle-gold" style="margin-bottom: 0.8rem;">Меценати та фундатори Ордену Багоугодних</div>
+        <p style="color: #a1a1aa; font-size: 0.92rem; line-height: 1.6;">
+            До цього священного залу автоматично входять парафіяни, які успішно закрили <strong style="color: var(--gold-bright);">5+ проєктів</strong>, а також почесні благодійники, висвячені Верховним Інквізитором.
+        </p>
+    </div>
+
+    @if (isAdmin)
+    {
+        <div class="admin-inquisition-panel">
+            <!-- Ліва частина: Канонізувати існуючого -->
+            <div>
+                <div class="inquisition-box-title" style="color: var(--accent-blue);">
+                    Канонізувати існуючого учасника
+                </div>
+                <form asp-action="ToggleSponsorStatus" method="post">
+                    @Html.AntiForgeryToken()
+                    <select name="userId" class="holy-field" required>
+                        <option value="">-- Оберіть парафіянина з бази --</option>
+                        @if (candidates != null)
+                        {
+                            @foreach (var c in candidates)
+                            {
+                                <option value="@c.Id">@c.UserName (@c.Email) — закрито: @c.CompletedOrdersCount</option>
+                            }
+                        }
+                    </select>
+                    <button type="submit" class="btn-ritual" style="width: 100%; justify-content: center;">
+                        Надати титул Святого Спонсора ✦
+                    </button>
+                </form>
+            </div>
+
+            <!-- Права частина: Вписати нового спонсора вручну -->
+            <div>
+                <div class="inquisition-box-title" style="color: var(--gold-bright);">
+                    Вписати нового Святого Спонсора
+                </div>
+                <form asp-action="CreateSponsorDirectly" method="post">
+                    @Html.AntiForgeryToken()
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+                        <input type="text" name="userName" class="holy-field" placeholder="Ім'я або Компанія" required />
+                        <input type="email" name="email" class="holy-field" placeholder="Email мецената" required />
+                    </div>
+                    <div style="display: flex; gap: 0.6rem;">
+                        <input type="number" name="completedProjects" class="holy-field" value="5" min="1" max="999" style="width: 130px; margin-bottom: 0;" title="Кількість проєктів" />
+                        <button type="submit" class="btn-ritual" style="flex: 1; justify-content: center;">
+                            + Додати в Пантеон
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+
+    <!-- СПИСОК СВЯТИХ СПОНСОРІВ (ВИДНИЙ УСІМ) -->
+    @if (!Model.Any())
+    {
+        <div class="empty-pantheon-box">
+            <svg style="width: 64px; height: 64px; margin-bottom: 1rem; fill: none; stroke: var(--primary-gold); stroke-width: 1.5;" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <h3 style="font-family: 'Cormorant Unicase', 'Cinzel', serif; color: var(--gold-bright); font-size: 1.4rem; margin-bottom: 0.5rem;">
+                Пантеон очікує на перших Меценатів
+            </h3>
+            <p style="color: #a1a1aa; font-size: 0.9rem; max-width: 480px; margin: 0 auto;">
+                Замовте та успішно завершіть 5 обрядів розробки, щоб ваше ім'я було викарбувано тут у золоті.
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="sponsors-grid">
+            @foreach (var sponsor in Model)
+            {
+                <div class="patron-card">
+                    <div class="patron-crown-wrap">
+                        <div class="crown-halo"></div>
+                        <svg class="crown-svg" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 24L6 10L12 18L16 6L20 18L26 10L28 24H4Z" fill="none" stroke="#f3d088" stroke-width="2" stroke-linejoin="round" />
+                            <line x1="4" y1="27" x2="28" y2="27" stroke="#c9a25e" stroke-width="2" stroke-linecap="round" />
+                            <circle cx="16" cy="6" r="1.5" fill="#38bdf8" />
+                            <circle cx="6" cy="10" r="1.5" fill="#38bdf8" />
+                            <circle cx="26" cy="10" r="1.5" fill="#38bdf8" />
+                        </svg>
+                    </div>
+
+                    <div class="patron-name">@sponsor.UserName</div>
+
+                    <div class="patron-title-badge">
+                        @sponsor.CustomTitle
+                    </div>
+
+                    <div class="patron-stats-split">
+                        <div>
+                            <div class="patron-stat-val" style="color: #4ade80;">@sponsor.CompletedOrdersCount</div>
+                            <div class="patron-stat-lbl">Закрито проєктів</div>
+                        </div>
+                        <div>
+                            <div class="patron-stat-val" style="color: var(--accent-blue);">@sponsor.JoinedAt.ToString("dd.MM.yyyy")</div>
+                            <div class="patron-stat-lbl">В Ордені з</div>
+                        </div>
+                    </div>
+
+                    @if (isAdmin && sponsor.CompletedOrdersCount < 5)
+                    {
+                        <form asp-action="ToggleSponsorStatus" method="post" style="margin-top: 0.6rem;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="userId" value="@sponsor.UserId" />
+                            <button type="submit" class="btn-danger btn-sm" style="width: 100%;">
+                                Зняти почесний статус
+                            </button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('mousemove', (e) => {
+            document.querySelectorAll('.patron-card').forEach(card => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--cx', `${e.clientX - rect.left}px`);
+                card.style.setProperty('--cy', `${e.clientY - rect.top}px`);
+            });
+        });
+    </script>
+}

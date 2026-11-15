@@ -5,14 +5,17 @@ namespace HolyBackend.DAL
 {
     public class HolyDbContext : DbContext
     {
-        public HolyDbContext(DbContextOptions<HolyDbContext> options) : base(options) { }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderMessage> OrderMessages { get; set; }
+        public DbSet<ApplicationUser> Users { get; set; }
 
-        public DbSet<PrayerRequest> Prayers { get; set; }
+        public HolyDbContext(DbContextOptions<HolyDbContext> options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasDefaultSchema("holy_backend");
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(HolyDbContext).Assembly);
         }
     }
 }

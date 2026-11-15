@@ -1,0 +1,684 @@
+﻿@model IEnumerable<HolyBackend.MVC.Models.ClientCrmViewModel>
+@{
+    ViewData["Title"] = "Гримуар Клієнтів (CRM)";
+    var totalUsers = Model.Count();
+    var sponsorsCount = Model.Count(u => u.IsHolySponsor || u.CompletedOrders >= 5);
+    var bannedCount = Model.Count(u => u.IsBanned);
+    var activeClients = Model.Count(u => !u.IsBanned && u.Role != "Admin");
+}
+
+<style>
+    .grimoire-sanctuary {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        padding: 0.5rem 0;
+    }
+
+    .grimoire-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        border-bottom: 1px solid rgba(201, 162, 94, 0.22);
+        padding-bottom: 1.3rem;
+    }
+
+    .tribunal-crest {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.75rem;
+        color: var(--accent-blue);
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+    }
+
+        .tribunal-crest::before {
+            content: "";
+            width: 24px;
+            height: 1px;
+            background: var(--primary-gold);
+            box-shadow: 0 0 8px var(--primary-gold);
+        }
+
+    .crm-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.25rem;
+    }
+
+    .crm-kpi-box {
+        background: linear-gradient(180deg, rgba(15, 18, 29, 0.92) 0%, rgba(8, 10, 16, 0.96) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.26);
+        border-radius: 14px;
+        padding: 1.15rem 1.35rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.75);
+    }
+
+    .crm-kpi-label {
+        font-family: 'Cinzel', serif;
+        font-size: 0.7rem;
+        color: #9ca3af;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .crm-kpi-val {
+        font-family: 'Cinzel', serif;
+        font-size: 1.95rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .grimoire-table-card {
+        background: linear-gradient(180deg, rgba(13, 16, 26, 0.94) 0%, rgba(7, 9, 14, 0.98) 100%);
+        border: 1px solid rgba(201, 162, 94, 0.35);
+        border-radius: 20px;
+        padding: 1.8rem 2rem;
+        box-shadow: 0 22px 55px rgba(0, 0, 0, 0.9), inset 0 0 28px rgba(0, 0, 0, 0.8);
+    }
+
+    .grimoire-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.4rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(201, 162, 94, 0.2);
+    }
+
+    .crm-filter-pills {
+        display: flex;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+    }
+
+    .crm-filter-btn {
+        background: rgba(6, 8, 13, 0.9);
+        border: 1px solid rgba(201, 162, 94, 0.22);
+        color: #9ca3af;
+        padding: 0.42rem 1rem;
+        border-radius: 50px;
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.22s ease;
+    }
+
+        .crm-filter-btn:hover {
+            color: var(--gold-bright);
+            border-color: rgba(201, 162, 94, 0.45);
+        }
+
+        .crm-filter-btn.active {
+            background: linear-gradient(135deg, rgba(201, 162, 94, 0.26), rgba(56, 189, 248, 0.14));
+            border-color: var(--primary-gold);
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(201, 162, 94, 0.2);
+        }
+
+    .crm-search-input {
+        background: #05070b;
+        border: 1px solid rgba(201, 162, 94, 0.32);
+        color: #ffffff;
+        padding: 0.5rem 1.1rem;
+        border-radius: 50px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.8rem;
+        min-width: 260px;
+        transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+        .crm-search-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+        }
+
+    .grimoire-table-wrap {
+        overflow-x: auto;
+    }
+
+    .grimoire-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+        .grimoire-table thead tr {
+            border-bottom: 1px solid rgba(201, 162, 94, 0.45);
+            color: var(--gold-bright);
+            font-family: 'Cinzel', serif;
+            font-size: 0.74rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-align: left;
+        }
+
+        .grimoire-table th {
+            padding: 12px 14px;
+        }
+
+    .grimoire-row {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        transition: background 0.2s ease;
+    }
+
+        .grimoire-row:hover {
+            background: rgba(201, 162, 94, 0.05);
+        }
+
+        .grimoire-row.banned-row {
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+    .grimoire-table td {
+        padding: 14px;
+        vertical-align: middle;
+    }
+
+    .user-cell-flex {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .user-monogram {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: rgba(6, 8, 13, 0.95);
+        border: 1px solid rgba(201, 162, 94, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Cinzel', serif;
+        font-weight: 700;
+        color: var(--gold-bright);
+        font-size: 0.95rem;
+        flex-shrink: 0;
+    }
+
+    .user-name-strong {
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 1.1rem;
+        color: #ffffff;
+        font-weight: 700;
+        display: block;
+        line-height: 1.15;
+    }
+
+    .user-email-muted {
+        font-family: 'Fira Code', monospace;
+        color: #71717a;
+        font-size: 0.74rem;
+    }
+
+    .rank-seal-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 50px;
+        background: rgba(201, 162, 94, 0.14);
+        border: 1px solid rgba(201, 162, 94, 0.45);
+        color: var(--gold-bright);
+        font-family: 'Cormorant Unicase', 'Cinzel', serif;
+        font-size: 0.84rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+        .rank-seal-pill.sponsor {
+            background: linear-gradient(135deg, rgba(201, 162, 94, 0.28), rgba(56, 189, 248, 0.15));
+            border-color: var(--gold-bright);
+            box-shadow: 0 0 14px rgba(201, 162, 94, 0.22);
+        }
+
+    .active-status-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #4ade80;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.76rem;
+    }
+
+    .active-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #4ade80;
+        box-shadow: 0 0 8px #4ade80;
+    }
+
+    .anathema-verdict-box {
+        background: rgba(24, 9, 13, 0.9);
+        border: 1px solid rgba(248, 113, 113, 0.4);
+        border-left: 3px solid #ef4444;
+        border-radius: 8px;
+        padding: 6px 10px;
+        max-width: 270px;
+    }
+
+    .orders-mini-track {
+        width: 120px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 5px;
+    }
+
+    .orders-mini-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-gold), #4ade80);
+    }
+
+    .tribunal-drawer {
+        display: none;
+        margin-top: 12px;
+        padding: 1rem 1.15rem;
+        background: rgba(18, 9, 13, 0.96);
+        border: 1px solid rgba(248, 113, 113, 0.55);
+        border-radius: 12px;
+        text-align: left;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.9);
+    }
+
+        .tribunal-drawer.open {
+            display: block;
+            animation: fadeDrawer 0.22s ease;
+        }
+
+    .reason-presets-row {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+    }
+
+    .reason-chip {
+        background: rgba(248, 113, 113, 0.1);
+        border: 1px solid rgba(248, 113, 113, 0.3);
+        color: #fca5a5;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.68rem;
+        padding: 2px 8px;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .reason-chip:hover {
+            background: rgba(248, 113, 113, 0.25);
+            color: #ffffff;
+        }
+
+    .tribunal-controls-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .tribunal-input {
+        flex: 1;
+        min-width: 210px;
+        padding: 8px 11px;
+        background: #06080d;
+        color: #ffffff;
+        border: 1px solid rgba(248, 113, 113, 0.45);
+        border-radius: 8px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.78rem;
+    }
+
+    .tribunal-select {
+        padding: 8px 11px;
+        background: #06080d;
+        color: var(--warning-amber);
+        border: 1px solid rgba(250, 204, 21, 0.45);
+        border-radius: 8px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.78rem;
+    }
+
+    @@keyframes fadeDrawer {
+        from {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@media (max-width: 1024px) {
+        .crm-kpi-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .crm-kpi-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="grimoire-sanctuary">
+    <div class="grimoire-header">
+        <div>
+            <div class="tribunal-crest">Liber Inquisitoris • CRM Tribunal</div>
+            <h1 class="gothic-title" style="margin-bottom: 0.2rem;">Гримуар Клієнтів</h1>
+            <div class="subtitle-gold" style="margin-bottom: 0;">
+                Реєстр парафіян, канонізація спонсорів та Трибунал Інквізиції
+            </div>
+        </div>
+        <div style="display: flex; gap: 0.8rem;">
+            <a asp-controller="Home" asp-action="Sponsors" class="btn-blue">Пантеон Спонсорів</a>
+            <a asp-action="Cabinet" class="btn-ritual">← До архіву заявок</a>
+        </div>
+    </div>
+
+    <div class="crm-kpi-grid">
+        <div class="crm-kpi-box">
+            <div>
+                <div class="crm-kpi-label">Усього у Гримуарі</div>
+                <div class="crm-kpi-val" style="color: var(--gold-bright);">@totalUsers</div>
+            </div>
+            <svg style="width: 30px; height: 30px; stroke: rgba(201,162,94,0.55);" viewBox="0 0 24 24" fill="none" stroke-width="1.6">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+        </div>
+
+        <div class="crm-kpi-box">
+            <div>
+                <div class="crm-kpi-label">Святі Спонсори</div>
+                <div class="crm-kpi-val" style="color: var(--accent-blue);">@sponsorsCount</div>
+            </div>
+            <svg style="width: 30px; height: 30px; stroke: rgba(56,189,248,0.55);" viewBox="0 0 24 24" fill="none" stroke-width="1.6">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+        </div>
+
+        <div class="crm-kpi-box">
+            <div>
+                <div class="crm-kpi-label">Активні Парафіяни</div>
+                <div class="crm-kpi-val" style="color: #4ade80;">@activeClients</div>
+            </div>
+            <svg style="width: 30px; height: 30px; stroke: rgba(74,222,128,0.55);" viewBox="0 0 24 24" fill="none" stroke-width="1.6">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+        </div>
+
+        <div class="crm-kpi-box">
+            <div>
+                <div class="crm-kpi-label">Під Анафемою (Бан)</div>
+                <div class="crm-kpi-val" style="color: #f87171;">@bannedCount</div>
+            </div>
+            <svg style="width: 30px; height: 30px; stroke: rgba(248,113,113,0.55);" viewBox="0 0 24 24" fill="none" stroke-width="1.6">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+            </svg>
+        </div>
+    </div>
+
+    <div class="grimoire-table-card">
+        <div class="grimoire-toolbar">
+            <div class="crm-filter-pills">
+                <button type="button" class="crm-filter-btn active" onclick="filterGrimoire('all', this)">Усі душі (@totalUsers)</button>
+                <button type="button" class="crm-filter-btn" onclick="filterGrimoire('sponsor', this)">Святі Спонсори (@sponsorsCount)</button>
+                <button type="button" class="crm-filter-btn" onclick="filterGrimoire('banned', this)">Під Анафемою (@bannedCount)</button>
+                <button type="button" class="crm-filter-btn" onclick="filterGrimoire('admin', this)">Інквізиція</button>
+            </div>
+
+            <input type="text" id="grimoireSearchInput" class="crm-search-input"
+                   placeholder="Пошук за ім'ям, Email або титулом..."
+                   oninput="applyGrimoireFilter()" />
+        </div>
+
+        <div class="grimoire-table-wrap">
+            <table class="grimoire-table">
+                <thead>
+                    <tr>
+                        <th>Ім'я / Електронна пошта</th>
+                        <th>Титул в Ордені</th>
+                        <th>Статус та Вирок</th>
+                        <th>Діяння (Замовлення)</th>
+                        <th style="text-align: right;">Суд Інквізиції</th>
+                    </tr>
+                </thead>
+                <tbody id="grimoireTableBody">
+                    @foreach (var client in Model)
+                    {
+                        bool isSponsor = client.IsHolySponsor || client.CompletedOrders >= 5;
+                        string initial = !string.IsNullOrEmpty(client.UserName)
+                        ? client.UserName.Substring(0, 1).ToUpper()
+                        : "P";
+                        int completionRatio = client.TotalOrders > 0
+                        ? (int)Math.Round((double)client.CompletedOrders / client.TotalOrders * 100)
+                        : 0;
+
+                        <tr class="grimoire-row @(client.IsBanned ? "banned-row" : "")"
+                            data-role="@client.Role.ToLowerInvariant()"
+                            data-sponsor="@(isSponsor ? "true" : "false")"
+                            data-banned="@(client.IsBanned ? "true" : "false")"
+                            data-search="@($"{client.UserName} {client.Email} {client.RankTitle}".ToLowerInvariant())">
+
+                            <!-- 1. Ім'я та Email -->
+                            <td>
+                                <div class="user-cell-flex">
+                                    <div class="user-monogram">@initial</div>
+                                    <div>
+                                        <span class="user-name-strong">@client.UserName</span>
+                                        <span class="user-email-muted">@client.Email</span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- 2. Титул -->
+                            <td>
+                                <span class="rank-seal-pill @(isSponsor ? "sponsor" : "")">
+                                    <span>✦</span>
+                                    <span>@client.RankTitle</span>
+                                </span>
+                            </td>
+
+                            <!-- 3. Статус та деталі бану -->
+                            <td>
+                                @if (client.IsBanned)
+                                {
+                                    <div class="anathema-verdict-box">
+                                        <div style="color: #f87171; font-family: 'Cinzel', serif; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.5px;">
+                                            АНАФЕМА (БЛОКУВАННЯ)
+                                        </div>
+                                        <div style="font-size: 0.76rem; color: #fca5a5; margin: 2px 0;">
+                                            Причина: @client.BanReason
+                                        </div>
+                                        <div style="font-family: 'Fira Code', monospace; font-size: 0.7rem; color: #9ca3af;">
+                                            Строк: @(client.BannedUntil.HasValue ? "до " + client.BannedUntil.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "Довічно")
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="active-status-tag">
+                                        <span class="active-dot"></span>
+                                        <span>Активний</span>
+                                    </span>
+                                    <div style="font-size: 0.7rem; color: #71717a; margin-top: 2px;">
+                                        З @client.FirstContactDate.ToLocalTime().ToString("dd.MM.yyyy")
+                                    </div>
+                                }
+                            </td>
+
+                            <!-- 4. Замовлення -->
+                            <td>
+                                <div style="font-family: 'Fira Code', monospace; font-size: 0.78rem; color: #e4e4e7;">
+                                    Усього: <strong>@client.TotalOrders</strong> • Закрито: <strong style="color: #4ade80;">@client.CompletedOrders</strong>
+                                </div>
+                                <div class="orders-mini-track">
+                                    <div class="orders-mini-fill" style="width: @completionRatio%;"></div>
+                                </div>
+                            </td>
+
+                            <!-- 5. Дії Інквізиції -->
+                            <td style="text-align: right;">
+                                @if (client.Role != "Admin")
+                                {
+                                    <div style="display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end;">
+                                        <!-- Канонізація спонсора -->
+                                        <form asp-controller="Home" asp-action="ToggleSponsorStatus" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@client.UserId" />
+                                            <input type="hidden" name="returnUrl" value="Grimoire" />
+                                            <button type="submit" class="btn-ritual btn-sm" title="Надати або зняти статус Святого Спонсора">
+                                                @(client.IsHolySponsor ? "Зняти спонсора" : "Спонсор ✦")
+                                            </button>
+                                        </form>
+
+                                        <!-- Помилування або Виклик форми Анафеми -->
+                                        @if (client.IsBanned)
+                                        {
+                                            <form asp-action="ToggleBanUser" method="post" style="display:inline;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@client.UserId" />
+                                                <button type="submit" class="btn-blue btn-sm">
+                                                    Помилувати
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn-warning btn-sm" onclick="toggleBanForm('@client.UserId')">
+                                                Анафема (Бан)
+                                            </button>
+                                        }
+
+                                        <!-- Повне видалення з бази -->
+                                        <form asp-action="DeleteUser" method="post" style="display:inline;" onsubmit="return confirm('Видалити учасника та всі його замовлення назавжди?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@client.UserId" />
+                                            <button type="submit" class="btn-danger btn-sm" title="Стерти з Гримуару">
+                                                Видалити
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <!-- Розкривна форма винесення вироку (Причина + Строк) -->
+                                    @if (!client.IsBanned)
+                                    {
+                                        <form id="banForm-@client.UserId" class="tribunal-drawer" asp-action="ToggleBanUser" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@client.UserId" />
+
+                                            <div style="font-family: 'Cinzel', serif; font-size: 0.72rem; color: #f87171; letter-spacing: 1px; margin-bottom: 6px;">
+                                                ВИНЕСЕННЯ ВИРОКУ ТРИБУНАЛУ ДЛЯ @client.UserName.ToUpper():
+                                            </div>
+
+                                            <!-- Швидкі пресети причин бану -->
+                                            <div class="reason-presets-row">
+                                                <button type="button" class="reason-chip" onclick="setBanReason('@client.UserId', 'Спам та флуд у Кімнаті Сповіді')">+ Спам у сповіді</button>
+                                                <button type="button" class="reason-chip" onclick="setBanReason('@client.UserId', 'Спроба ін’єкції єретичного коду')">+ Спроба ін’єкції</button>
+                                                <button type="button" class="reason-chip" onclick="setBanReason('@client.UserId', 'Порушення канонів Ордену Багоугодних')">+ Порушення канонів</button>
+                                            </div>
+
+                                            <div class="tribunal-controls-row">
+                                                <input type="text" id="banReasonInput-@client.UserId" name="banReason" class="tribunal-input"
+                                                       placeholder="Вкажіть офіційну причину вироку..." required />
+
+                                                <select name="durationHours" class="tribunal-select">
+                                                    <option value="1">На 1 годину</option>
+                                                    <option value="24">На 24 години (1 доба)</option>
+                                                    <option value="72">На 3 доби</option>
+                                                    <option value="168">На 7 днів</option>
+                                                    <option value="720">На 30 днів</option>
+                                                    <option value="0">Назавжди (Довічно)</option>
+                                                </select>
+
+                                                <button type="submit" class="btn-danger btn-sm">Винести вирок</button>
+                                            </div>
+                                        </form>
+                                    }
+                                }
+                                else
+                                {
+                                    <span style="font-family: 'Cormorant Unicase', 'Cinzel', serif; color: var(--primary-gold); font-size: 0.9rem; font-weight: 700;">
+                                        ✦ Верховний Інквізитор
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentCrmFilter = 'all';
+
+        function toggleBanForm(userId) {
+            const form = document.getElementById('banForm-' + userId);
+            if (form) {
+                form.classList.toggle('open');
+            }
+        }
+
+        function setBanReason(userId, text) {
+            const input = document.getElementById('banReasonInput-' + userId);
+            if (input) {
+                input.value = text;
+                input.focus();
+            }
+        }
+
+        function filterGrimoire(filterType, btn) {
+            currentCrmFilter = filterType;
+            document.querySelectorAll('.crm-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyGrimoireFilter();
+        }
+
+        function applyGrimoireFilter() {
+            const query = (document.getElementById('grimoireSearchInput')?.value || '').trim().toLowerCase();
+
+            document.querySelectorAll('#grimoireTableBody .grimoire-row').forEach(row => {
+                const role = row.getAttribute('data-role');
+                const isSponsor = row.getAttribute('data-sponsor') === 'true';
+                const isBanned = row.getAttribute('data-banned') === 'true';
+                const searchTxt = row.getAttribute('data-search') || '';
+
+                let matchesTab = true;
+                if (currentCrmFilter === 'sponsor') matchesTab = isSponsor;
+                else if (currentCrmFilter === 'banned') matchesTab = isBanned;
+                else if (currentCrmFilter === 'admin') matchesTab = role === 'admin';
+
+                const matchesSearch = !query || searchTxt.includes(query);
+                row.style.display = (matchesTab && matchesSearch) ? '' : 'none';
+            });
+        }
+    </script>
+}

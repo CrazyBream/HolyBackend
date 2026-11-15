@@ -1,49 +1,293 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    bool isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+    bool isAdmin = User.IsInRole("Admin");
+}
+<!DOCTYPE html>
+<html lang="uk" data-theme="dark" data-lang="uk">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - HolyBackend.MVC</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/HolyBackend.MVC.styles.css" asp-append-version="true" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] | Pray &amp; Deploy</title>
+
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('holy-theme') || 'dark';
+            const savedLang = localStorage.getItem('holy-lang') || 'uk';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.documentElement.setAttribute('data-lang', savedLang);
+            document.documentElement.lang = savedLang;
+        })();
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=Cormorant+Unicase:wght@600;700&family=Fira+Code:wght@400;500;600&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/holy-theme.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">HolyBackend.MVC</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+    <div class="cursor-glow"></div>
+
+    <header class="navbar">
+        <a asp-controller="Home" asp-action="Index" class="brand">
+            <div class="brand-logo-wrap">
+                <img src="/images/logo-clean.png" alt="Pray & Deploy Logo" />
             </div>
+            <div class="brand-titles">
+                <span class="brand-text">Pray &amp; Deploy</span>
+                <span class="brand-subtext">Order of Code</span>
+            </div>
+        </a>
+
+        <nav class="nav-links">
+            <a asp-controller="Home" asp-action="Index" class="@(currentController == "Home" && currentAction == "Index" ? "active" : "")" data-i18n="nav.home">Головна</a>
+            <a asp-controller="Home" asp-action="About" class="@(currentAction == "About" ? "active" : "")" data-i18n="nav.about">Про Орден</a>
+            <a asp-controller="Home" asp-action="Services" class="@(currentAction == "Services" ? "active" : "")" data-i18n="nav.services">Послуги</a>
+            <a asp-controller="Home" asp-action="Portfolio" class="@(currentAction == "Portfolio" ? "active" : "")" data-i18n="nav.portfolio">Портфоліо</a>
+            <a asp-controller="Home" asp-action="Statistics" class="@(currentAction == "Statistics" ? "active" : "")" data-i18n="nav.stats">Статистика</a>
+            <a asp-controller="Home" asp-action="Sponsors" class="@(currentAction == "Sponsors" ? "active" : "")" data-i18n="nav.sponsors">Спонсори</a>
+            @if (isAdmin)
+            {
+                <a asp-controller="Orders" asp-action="Grimoire" class="nav-grimoire-link @(currentAction == "Grimoire" ? "active" : "")">
+                    <span>✦</span>
+                    <span data-i18n="nav.grimoire">Гримуар</span>
+                </a>
+            }
         </nav>
+
+        <div class="header-actions">
+            <button type="button" class="sacred-switch-pill" id="langSwitchBtn" onclick="toggleSacredLanguage()" title="Змінити мову / Switch Language">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                <span id="langSwitchLabel">UA</span>
+            </button>
+
+            <button type="button" class="sacred-switch-pill" id="themeSwitchBtn" onclick="toggleSacredTheme()" title="Змінити тему / Toggle Theme">
+                <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                <svg id="themeIconSun" style="display:none;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+            </button>
+
+            @if (isAuthenticated)
+            {
+                <div class="user-dropdown-wrap" id="userDropdownWrap">
+                    <button type="button" class="user-menu-trigger" onclick="toggleUserDropdown(event)" title="Меню Парафіянина">
+                        <span class="user-role-dot @(isAdmin ? "admin" : "client")"></span>
+                        <span>@User.Identity?.Name</span>
+                        <span id="navUnreadBadge" class="unread-badge">0</span>
+                        <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+
+                    <div class="user-dropdown-menu" id="userDropdownMenu">
+                        <div class="dropdown-header-info">
+                            <div class="dropdown-role-tag">@(isAdmin ? "Верховний Інквізитор" : "Член Ордену")</div>
+                            <div class="dropdown-user-name">@User.Identity?.Name</div>
+                        </div>
+
+                        <a asp-controller="Orders" asp-action="Cabinet" class="dropdown-item">
+                            <span class="dropdown-item-left">
+                                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                </svg>
+                                <span>@(isAdmin ? "Архів Сповідей (Кабінет)" : "Мої замовлення (Кабінет)")</span>
+                            </span>
+                            <span id="dropdownUnreadBadge" class="unread-badge">0</span>
+                        </a>
+
+                        <a asp-controller="Account" asp-action="Profile" class="dropdown-item">
+                            <span class="dropdown-item-left">
+                                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span data-i18n="menu.profile">Редагувати профіль</span>
+                            </span>
+                        </a>
+
+                        @if (!isAdmin)
+                        {
+                            <a asp-controller="Orders" asp-action="Create" class="dropdown-item item-highlight">
+                                <span class="dropdown-item-left">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    <span data-i18n="menu.newOrder">Замовити новий обряд</span>
+                                </span>
+                                <span>✦</span>
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Orders" asp-action="Grimoire" class="dropdown-item">
+                                <span class="dropdown-item-left">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                    </svg>
+                                    <span data-i18n="menu.grimoire">Гримуар Клієнтів (CRM)</span>
+                                </span>
+                            </a>
+                        }
+
+                        <div class="dropdown-divider"></div>
+
+                        <form asp-controller="Account" asp-action="Logout" method="post" style="margin: 0;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dropdown-item item-danger">
+                                <span class="dropdown-item-left">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                        <polyline points="16 17 21 12 16 7"></polyline>
+                                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                                    </svg>
+                                    <span data-i18n="menu.logout">Вийти з Храму</span>
+                                </span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <a asp-controller="Orders" asp-action="Create" class="btn-ritual">
+                    <span data-i18n="nav.orderBtn">+ Замовити обряд</span>
+                </a>
+                <a asp-controller="Account" asp-action="Login" class="btn-login-gate">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                    </svg>
+                    <span data-i18n="nav.loginBtn">Увійти в Храм</span>
+                </a>
+            }
+        </div>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+
+    <div id="holyToastContainer">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="holy-toast">
+                <div>
+                    <div style="font-family: 'Cinzel', serif; color: var(--gold-bright); font-size: 0.74rem; letter-spacing: 1px; margin-bottom: 3px;">
+                        БЛАГА ЗВІСТКА ОРДЕНУ
+                    </div>
+                    <div>@TempData["SuccessMessage"]</div>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#9ca3af; cursor:pointer; font-size:1.1rem;">✕</button>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="holy-toast error">
+                <div>
+                    <div style="font-family: 'Cinzel', serif; color: var(--danger-red); font-size: 0.74rem; letter-spacing: 1px; margin-bottom: 3px;">
+                        ПОПЕРЕДЖЕННЯ ІНКВІЗИЦІЇ
+                    </div>
+                    <div>@TempData["ErrorMessage"]</div>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#fca5a5; cursor:pointer; font-size:1.1rem;">✕</button>
+            </div>
+        }
+
+        <div id="liveChatAlerts"></div>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - HolyBackend.MVC - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
+    <main class="page-container">
+        @RenderBody()
+    </main>
+
+    <footer>
+        Server: <span style="color:var(--gold-bright);">127.0.0.1:666</span> |
+        Git: <span style="color:var(--primary-gold);">github.com/CrazyBream/HolyBackend</span> |
+        <span data-i18n="footer.motto" style="font-family: var(--nav-font); font-size: 1rem; color: var(--gold-bright); margin-left: 6px;">
+            Нехай ваш код буде чистим, а деплой — успішним.
+        </span>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script src="~/js/holy-i18n.js" asp-append-version="true"></script>
+
+    @if (isAuthenticated)
+    {
+        <script>
+            let lastKnownUnread = -1;
+
+            async function checkUnreadChats() {
+                try {
+                    const res = await fetch('/Orders/GetUnreadNotifications');
+                    if (!res.ok) return;
+                    const data = await res.json();
+
+                    const badge = document.getElementById('navUnreadBadge');
+                    const dropBadge = document.getElementById('dropdownUnreadBadge');
+                    const alertsBox = document.getElementById('liveChatAlerts');
+
+                    [badge, dropBadge].forEach(b => {
+                        if (!b) return;
+                        if (data.totalUnread > 0) {
+                            b.style.display = 'inline-block';
+                            b.textContent = data.totalUnread;
+                        } else {
+                            b.style.display = 'none';
+                        }
+                    });
+
+                    const currentPath = window.location.pathname.toLowerCase();
+
+                    if (alertsBox && data.chats && data.chats.length > 0 && data.totalUnread !== lastKnownUnread) {
+                        lastKnownUnread = data.totalUnread;
+                        alertsBox.innerHTML = data.chats
+                            .filter(c => !currentPath.includes(c.orderId.toLowerCase()))
+                            .map(c => `
+                                <a href="/Orders/Details/${c.orderId}" class="live-chat-alert">
+                                    <div style="font-size: 0.74rem; color: var(--accent-blue); font-weight: 700; margin-bottom: 3px; font-family: 'Cinzel', serif;">
+                                        ✦ ПРОПУЩЕНІ ПОВІДОМЛЕННЯ (${c.unreadCount})
+                                    </div>
+                                    <div style="font-size: 0.85rem; color: var(--text-main);">
+                                        <span>У чаті</span> <strong>${c.orderCode} «${c.orderTitle}»</strong> <span>від ${c.lastSender}</span>
+                                    </div>
+                                    <div style="font-size: 0.74rem; color: var(--gold-bright); margin-top: 4px;">
+                                        Натисніть, щоб відкрити Кімнату Сповіді →
+                                    </div>
+                                </a>
+                            `).join('');
+
+                        // Якщо зараз обрана англійська мова — миттєво перекладаємо нову плашку
+                        const currentLang = document.documentElement.getAttribute('data-lang') || 'uk';
+                        if (currentLang === 'en' && typeof applySacredLanguage === 'function') {
+                            applySacredLanguage('en');
+                        }
+                    } else if (alertsBox && data.totalUnread === 0) {
+                        lastKnownUnread = 0;
+                        alertsBox.innerHTML = '';
+                    }
+                } catch (e) { }
+            }
+
+            checkUnreadChats();
+            setInterval(checkUnreadChats, 6000);
+        </script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
